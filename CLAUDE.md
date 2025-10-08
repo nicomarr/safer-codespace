@@ -42,6 +42,53 @@ Key takeaways for our code:
 - **Simple is better than complex** — Inspired by fastai: brevity facilitates reasoning
 - **If the implementation is hard to explain, it's a bad idea** — Code should be self-explanatory with proper documentation
 
+### Polya's Problem-Solving Strategy
+When approaching any programming problem or implementation task, follow **George Polya's four-step problem-solving process**:
+
+**IMPORTANT - Interactive Collaboration:**
+- **For complex tasks and debugging**: Work in small batches and **STOP after each major step** to wait for user feedback before proceeding
+- **For simple, isolated tasks**: You may complete multiple steps at once if the task is straightforward and has no dependencies
+- When in doubt about task complexity, err on the side of waiting for feedback
+
+#### 1. Understand the Problem
+- **Read the problem carefully**: Ensure you understand all the terms and the problem's requirements
+- **Identify what is given and what needs to be found**: Distinguish between the known and unknown variables
+- **Restate the problem in your own words**: This helps clarify the problem and ensures you have grasped the main idea
+- **Draw a diagram using Mermaid syntax if necessary**: Visual aids can make complex problems more manageable and understandable.
+- Ask clarifying questions if anything is unclear
+
+#### 2. Devise a Plan
+- **Think of possible strategies**: Consider various approaches, such as:
+  - Working backwards from the desired result
+  - Looking for patterns in the data or requirements
+  - Breaking the problem into smaller, manageable parts
+  - Simplifying the problem to solve a special case first
+  - Using analogies to similar problems
+- **Choose the most promising strategy**: Select the method that seems most likely to lead to a solution
+- **Relate the problem to similar problems**: Use insights from previously solved problems that are similar in nature
+- Consider data structures, algorithms, and design patterns that might apply
+
+#### 3. Carry Out the Plan
+- **Implement the chosen strategy**: Apply the steps of your plan systematically
+- **Be thorough and patient**: Carefully execute each step without rushing
+- **Keep track of your work**: Document each part of the process through:
+  - Clear variable names that reflect their purpose
+  - Comments explaining non-obvious decisions
+  - Docstrings describing function behavior
+  - Print statements or verbose flags for debugging
+- **Test as you go**: Verify each component works before moving to the next
+- If the plan isn't working, don't be afraid to try a different approach
+
+#### 4. Look Back
+- **Review the solution**: Check the results to ensure they make sense and the problem is fully solved
+- **Test edge cases**: Verify the solution handles boundary conditions and unusual inputs
+- **Reflect on the process**: Consider what worked well and what didn't, which helps improve future problem-solving skills
+- **Refactor if needed**: Improve code clarity, performance, or structure based on what you learned
+- **Generalize the solution**: Think about how the strategy could be applied to other problems
+- **Document insights**: Add comments or documentation about why this approach was chosen
+
+This systematic approach aligns perfectly with literate programming: you're documenting your thought process as you solve the problem, making it easier for others (and future you) to understand not just *what* the code does, but *why* it was written this way.
+
 ### Additional Principles
 - Balance conciseness with readability
 - One line should implement one complete idea
@@ -308,11 +355,11 @@ chore: update numpy to 2.0.0
 - **Create new branch from specific commit**: `git switch -c new-branch-name commit-hash`
 
 **NEVER use destructive Git commands:**
-- ❌ `git checkout` - Can overwrite files
-- ❌ `git branch -D` - Deletes branches
-- ❌ `git reset --hard` - Loses uncommitted changes
-- ❌ `git clean -fd` - Deletes untracked files
-- ❌ Any command that can delete branches, logs, or data
+- **FORBIDDEN:** `git checkout` - Can overwrite files
+- **FORBIDDEN:** `git branch -D` - Deletes branches
+- **FORBIDDEN:** `git reset --hard` - Loses uncommitted changes
+- **FORBIDDEN:** `git clean -fd` - Deletes untracked files
+- **FORBIDDEN:** Any command that can delete branches, logs, or data
 
 **All deletion operations must be performed manually by the user.**
 
@@ -329,6 +376,7 @@ chore: update numpy to 2.0.0
 - Include external document links for complex algorithms
 - Avoid automatic formatters that conflict with these preferences
 - Keep PRs small and discuss complex changes before implementation
+- **Never use emojis** in code, documentation, or any written content unless explicitly requested by the user
 
 ## When to Override
 These preferences should be followed by default. Override them only when:
