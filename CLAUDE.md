@@ -1,6 +1,8 @@
-# Code Style Preferences
+# Development Philosophy and Coding Standards
 
-This document outlines the coding style preferences for this project, based on the fastai coding style with specific modifications.
+This document outlines our approach to software development: combining literate programming, test-driven development, MVP-first methodology, and exploratory programming in Jupyter notebooks—along with specific code style preferences.
+
+Based on the fastai coding style with significant extensions for modern development practices.
 
 ## Philosophical Foundations
 
@@ -45,11 +47,6 @@ Key takeaways for our code:
 ### Polya's Problem-Solving Strategy
 When approaching any programming problem or implementation task, follow **George Polya's four-step problem-solving process**:
 
-**IMPORTANT - Interactive Collaboration:**
-- **For complex tasks and debugging**: Work in small batches and **STOP after each major step** to wait for user feedback before proceeding
-- **For simple, isolated tasks**: You may complete multiple steps at once if the task is straightforward and has no dependencies
-- When in doubt about task complexity, err on the side of waiting for feedback
-
 #### 1. Understand the Problem
 - **Read the problem carefully**: Ensure you understand all the terms and the problem's requirements
 - **Identify what is given and what needs to be found**: Distinguish between the known and unknown variables
@@ -90,10 +87,159 @@ When approaching any programming problem or implementation task, follow **George
 This systematic approach aligns perfectly with literate programming: you're documenting your thought process as you solve the problem, making it easier for others (and future you) to understand not just *what* the code does, but *why* it was written this way.
 
 ### Additional Principles
+
+#### Code Quality and Readability
 - Balance conciseness with readability
 - One line should implement one complete idea
-- Optimize for performance and clarity
 - Code is read far more often than it is written
+- Optimize for performance and clarity
+
+#### Algorithmic Implementation
+- Optimize for both performance and readability
+- Use lazy data structures when appropriate
+- Prefer numpy/pytorch broadcasting over loops when working with arrays
+- Include references to paper equations when implementing from research
+- Validate implementations empirically through immediate testing
+
+## Development Methodology
+
+### MVP-First Approach: The 6-8 Step Rule
+
+**Core Principle:** If you cannot reach a functional Minimum Viable Product (MVP) within 6-8 implementation steps, the scope must be narrowed.
+
+#### What is an MVP?
+An MVP is the simplest version of a feature that:
+- **Solves the core problem** — Addresses the fundamental user need
+- **Can be demonstrated and validated** — Produces tangible, testable output
+- **Provides value to the user** — Works end-to-end, even if basic
+- **Serves as a foundation for iteration** — Can be enhanced incrementally
+
+#### The 6-8 Step Guideline
+Each development task should be achievable in 6-8 discrete steps where each step is:
+- **Testable**: Can be validated independently
+- **Demonstrable**: Produces observable output
+- **Incremental**: Adds clear value to previous step
+- **Simple**: Focused on one clear objective
+
+#### When Scope is Too Large
+If you find yourself needing more than 8 steps:
+1. **Re-examine requirements**: What is the absolute core functionality?
+2. **Remove nice-to-haves**: Strip down to essential features only
+3. **Defer complexity**: Save advanced features for iteration 2
+4. **Split into phases**: Define MVP Phase 1, then plan Phase 2
+
+#### Example: Building a Data Pipeline
+❌ **Too Broad** (15+ steps):
+- Load data from multiple sources (CSV, JSON, API, database)
+- Clean, validate, and transform data with complex rules
+- Feature engineering with ML preprocessing
+- Store in database with versioning and metadata
+- Create interactive dashboard with visualizations
+- Add real-time monitoring and alerting
+- Implement automatic error recovery and retry logic
+
+✅ **MVP** (6 steps):
+1. Load data from single CSV file
+2. Basic validation (check for nulls, correct types)
+3. Simple transformation (normalize one column)
+4. Save to output CSV
+5. Print summary statistics
+6. Validate output format with assertions
+
+**Then iterate in subsequent phases:**
+- Phase 2: Add more data sources
+- Phase 3: Add ML preprocessing
+- Phase 4: Add database storage
+- Phase 5: Add visualization dashboard
+
+### Incremental Development: Small Batches, Continuous Validation
+
+**Principle:** Always work in the simplest way possible. Build incrementally, validate each step.
+
+#### The Small Batch Workflow
+1. **Implement the simplest version first**
+   - Hard-code before parameterizing
+   - Single case before general case
+   - Console output before fancy UI
+   - Concrete example before abstraction
+
+2. **Validate immediately**
+   - Print intermediate values
+   - Check outputs manually or with assertions
+   - Run the code to see actual results
+   - Ensure each step works before moving on
+
+3. **Iterate to add complexity**
+   - Add one parameter at a time
+   - Extend to handle more cases gradually
+   - Refactor and improve incrementally
+   - Never add multiple features simultaneously
+
+#### Example: Progressive Enhancement
+```python
+# Step 1: Simplest version (hard-coded, concrete)
+data = [1, 2, 3, 4, 5]
+result = [x * 2 for x in data]
+print(result)  # Validate: [2, 4, 6, 8, 10] ✓
+
+# Step 2: Make it a function
+def double_values(data: list[int]) -> list[int]:
+    """Double all values in a list."""
+    return [x * 2 for x in data]
+
+assert double_values([1, 2, 3]) == [2, 4, 6]  # Validate ✓
+
+# Step 3: Generalize to any multiplier
+def multiply_values(data: list[int], multiplier: int) -> list[int]:
+    """Multiply all values by a given multiplier."""
+    return [x * multiplier for x in data]
+
+assert multiply_values([1, 2, 3], 3) == [3, 6, 9]  # Validate ✓
+
+# Step 4: Add type flexibility for floats
+def multiply_values(data: list[float], multiplier: float) -> list[float]:
+    """Multiply all values by a given multiplier.
+    
+    Args:
+        data: List of numbers to multiply.
+        multiplier: Factor to multiply by.
+        
+    Returns:
+        List with all values multiplied.
+    """
+    return [x * multiplier for x in data]
+
+assert multiply_values([1.5, 2.5], 2.0) == [3.0, 5.0]  # Validate ✓
+```
+
+**Key Insight:** Each step is complete, testable, and adds value. Never skip validation between steps.
+
+### Interactive Collaboration
+
+**IMPORTANT - The 6-8 Step Rule:**
+- Each task should be achievable in **6-8 discrete steps maximum**
+- If more steps are needed, **STOP and propose scope reduction**
+- Each step should be validated before proceeding to the next
+- Present options for narrowing scope to fit within the guideline
+
+**For complex tasks and debugging:**
+- Work in small batches and **STOP after each major step** to wait for user feedback
+- Present what you've accomplished, validate it works, then ask before continuing
+- Never implement more than 2-3 steps ahead without validation
+- Show progress incrementally so issues are caught early
+
+**For simple, isolated tasks:**
+- You may complete multiple steps at once if the task is:
+  - Straightforward with no dependencies
+  - Has crystal clear requirements
+  - Total scope is under 6 steps
+  - No ambiguity about the approach
+
+**When in doubt:**
+- Err on the side of waiting for feedback
+- Ask if scope should be narrowed
+- Propose MVP version first
+- Break large tasks into smaller phases
 
 ## Python-Specific Preferences
 
@@ -186,15 +332,96 @@ All code should be designed to work naturally in notebook environments, supporti
 
 ## Testing and Validation
 
-### Immediate Testing Philosophy
-Testing should be integrated naturally into the development process, not as a separate phase:
+### Testing Approaches
+Testing should be integrated naturally into the development process, not as a separate phase. We support two complementary approaches depending on context:
 
-**1. Test Immediately After Implementation**
-- When you implement a function, use it right away in the next cell to verify it works
-- Show concrete examples of the function in action
-- This creates living documentation and catches issues immediately
+#### Approach 1: Test-Driven Development (TDD)
+**Recommended for:** New features with clear requirements, refactoring existing code, building reusable functions.
 
-**2. Use Assertions Liberally**
+Write tests BEFORE implementation following the **Red-Green-Refactor** cycle:
+
+1. **Red**: Write a failing test/example that defines the desired behavior
+2. **Green**: Implement the minimum code necessary to make the test pass
+3. **Refactor**: Clean up and improve the code while keeping tests passing
+
+**TDD in Notebooks:**
+```python
+# Cell 1: Define expected behavior with test cases (RED - this will fail)
+def test_normalize_scores():
+    """Test cases defined BEFORE implementation."""
+    # Test normal case
+    result = normalize_scores([10, 20, 30])
+    assert result == [0.0, 0.5, 1.0], "Should normalize to [0,1] range"
+    
+    # Test edge case: all equal values
+    result = normalize_scores([5, 5, 5])
+    assert all(x == 0.5 for x in result), "Equal values should map to 0.5"
+    
+    # Test edge case: negative values
+    result = normalize_scores([-10, 0, 10])
+    assert result == [0.0, 0.5, 1.0], "Should work with negative values"
+
+# Running this cell will fail since normalize_scores doesn't exist yet ❌
+
+# Cell 2: NOW implement the function to satisfy the tests (GREEN)
+def normalize_scores(scores: list[float]) -> list[float]:
+    """Normalize scores to [0, 1] range.
+    
+    Args:
+        scores: List of numeric scores to normalize.
+        
+    Returns:
+        Normalized scores where min maps to 0 and max maps to 1.
+    """
+    min_score = min(scores)
+    max_score = max(scores)
+    range_score = max_score - min_score
+    
+    # Handle edge case: all scores are the same
+    if range_score == 0:
+        return [0.5] * len(scores)
+    
+    return [(s - min_score) / range_score for s in scores]
+
+# Cell 3: Run the tests (should pass now) ✓
+test_normalize_scores()
+print("✓ All tests passed!")
+
+# Cell 4: Refactor if needed (REFACTOR)
+# The code is already clean, but we could add type hints, docstrings, etc.
+```
+
+**Benefits of TDD:**
+- Forces you to think about requirements and edge cases upfront
+- Ensures code is testable by design
+- Provides immediate feedback when something breaks
+- Creates executable documentation of expected behavior
+- Catches bugs at the point of introduction
+
+#### Approach 2: Immediate Testing After Implementation
+**Recommended for:** Exploratory work, data analysis, unclear requirements, prototyping.
+
+- Implement function based on intuition and domain knowledge
+- Test immediately in the next cell to verify it works
+- Add assertions to validate assumptions
+- Use verbose flags and print statements for debugging
+- Iterate based on observed behavior
+
+**Choose TDD when:**
+- Requirements are clear and well-defined
+- Building new features or utilities
+- Refactoring existing code
+- Creating reusable components
+
+**Choose immediate testing when:**
+- Exploring data or algorithms
+- Prototyping with unclear requirements
+- Debugging complex issues
+- Learning new libraries or techniques
+
+### Core Testing Principles
+
+**1. Use Assertions Liberally**
 - Add `assert` statements throughout the code where assumptions should hold
 - Assertions catch bugs immediately at the point of failure
 - They serve as executable documentation of invariants
@@ -204,7 +431,7 @@ Testing should be integrated naturally into the development process, not as a se
   assert 0 <= probability <= 1, f"Probability must be in [0,1], got {probability}"
   ```
 
-**3. Debug and Verbose Parameters**
+**2. Debug and Verbose Parameters**
 - Include optional `debug=False` or `verbose=False` parameters in functions
 - When enabled, print intermediate values and state
 - This makes debugging interactive and transparent
@@ -231,13 +458,13 @@ Testing should be integrated naturally into the development process, not as a se
       return result
   ```
 
-**4. Print Statements for Development**
+**3. Print Statements for Development**
 - Print statements are valuable tools during development
 - Show intermediate results, shapes, statistics
 - Help build intuition about data and algorithm behavior
 - Can be removed or controlled via verbose flags once code stabilizes
 
-**5. No pytest or unittest**
+**4. No pytest or unittest**
 - Formal testing frameworks like pytest and unittest are **not used**
 - They are impractical for:
   - Literate programming workflows
@@ -249,57 +476,41 @@ Testing should be integrated naturally into the development process, not as a se
   - Examples that demonstrate correctness
   - Visual inspection of outputs
 
-### Testing Example in Notebook
+### Example: Immediate Testing in Notebook
 ```python
-# Cell 1: Implementation
-def normalize_scores(scores: list[float], verbose: bool = False) -> list[float]:
-    """Normalize scores to [0, 1] range.
+# Cell 1: Implementation with assertions and verbose option
+def calculate_statistics(data: list[float], verbose: bool = False) -> dict[str, float]:
+    """Calculate basic statistics for a dataset.
 
     Args:
-        scores: Raw scores to normalize.
-        verbose: If True, print normalization details.
+        data: List of numeric values.
+        verbose: If True, print intermediate calculations.
 
     Returns:
-        Normalized scores in [0, 1] range.
+        Dictionary with mean, median, and std deviation.
     """
-    assert len(scores) > 0, "Scores list cannot be empty"
-
-    min_score = min(scores)
-    max_score = max(scores)
-    range_score = max_score - min_score
-
-    assert range_score >= 0, "Invalid score range"
-
+    assert len(data) > 0, "Data cannot be empty"
+    
+    sorted_data = sorted(data)
+    mean = sum(data) / len(data)
+    median = sorted_data[len(data) // 2]
+    variance = sum((x - mean) ** 2 for x in data) / len(data)
+    std_dev = variance ** 0.5
+    
     if verbose:
-        print(f"Score range: [{min_score}, {max_score}]")
-
-    # Handle edge case: all scores are the same
-    if range_score == 0:
-        return [0.5] * len(scores)
-
-    normalized = [(s - min_score) / range_score for s in scores]
-
-    if verbose:
-        print(f"Normalized sample: {normalized[:5]}")
-
-    return normalized
+        print(f"Dataset size: {len(data)}")
+        print(f"Range: [{min(data)}, {max(data)}]")
+    
+    return {"mean": mean, "median": median, "std_dev": std_dev}
 
 # Cell 2: Immediate testing and demonstration
-test_scores = [10, 20, 30, 40, 50]
-result = normalize_scores(test_scores, verbose=True)
-print(f"Input: {test_scores}")
-print(f"Output: {result}")
-assert all(0 <= x <= 1 for x in result), "All scores should be in [0, 1]"
-assert result[0] == 0.0 and result[-1] == 1.0, "Min should map to 0, max to 1"
+test_data = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+stats = calculate_statistics(test_data, verbose=True)
+print(f"Statistics: {stats}")
+assert stats["mean"] == 5.5, "Mean should be 5.5"
+assert stats["median"] == 6, "Median should be 6"
 print("✓ All checks passed!")
 ```
-
-## Algorithmic Principles
-- Optimize for performance and readability
-- Use lazy data structures when appropriate
-- Prefer numpy/pytorch broadcasting over loops
-- Include references to paper equations when implementing from research
-- Validate implementations empirically through immediate testing
 
 ## Git Workflow
 
