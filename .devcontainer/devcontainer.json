@@ -1,0 +1,16 @@
+{
+  "name": "Python 3.13",
+  "image": "mcr.microsoft.com/devcontainers/python:3.13-bullseye",
+  "features": {
+    "ghcr.io/devcontainers/features/node:1": {
+      "version": "latest"
+    }
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": [],
+      "settings": {}
+    }
+  },
+  "postCreateCommand": "pip install uv && uv tool install llm && llm install llm-github-models && llm models default github/gpt-4.1 && npm install -g @anthropic-ai/claude-code"
+}
