@@ -4,7 +4,8 @@
   "features": {
     "ghcr.io/devcontainers/features/node:1": {
       "version": "latest"
-    }
+    },
+    "ghcr.io/devcontainers/features/go:1": {}
   },
   "customizations": {
     "vscode": {
@@ -12,5 +13,5 @@
       "settings": {}
     }
   },
-  "postCreateCommand": "pip install uv && uv tool install llm && llm install llm-github-models && llm models default github/gpt-4.1 && npm install -g @anthropic-ai/claude-code"
+  "postCreateCommand": "pip install uv && uv tool install llm && llm install llm-github-models && llm models default github/gpt-4.1 && npm install -g @anthropic-ai/claude-code && go install github.com/charmbracelet/glow/v2@latest"
 }
