@@ -27,6 +27,9 @@ This devcontainer comes with the following tools automatically installed:
 ### Documentation Tools
 - **glow** - Render markdown in the terminal with style
 
+### Task Automation
+- **just** - Command runner for project-specific tasks (similar to make, but simpler)
+
 ## Getting Started
 
 ### Using Claude Code
@@ -150,6 +153,46 @@ glow
 # Pipe markdown content to glow
 cat file.md | glow -
 ```
+
+### Using just (Command Runner)
+`just` is a task automation tool that makes it easy to define and run project-specific commands. It uses a `justfile` to store command definitions.
+
+```bash
+# List all available commands
+just --list
+
+# Run a specific command
+just command-name
+
+# Run a command with arguments
+just command-name arg1 arg2
+
+# Show what a command would do without running it
+just --dry-run command-name
+
+# View a specific command definition
+just --show command-name
+```
+
+#### Creating Commands in justfile
+A `justfile` contains command definitions written with simple syntax:
+
+```just
+# Comment describing what this command does
+command-name:
+    command-to-run
+    another-command
+
+# Command with parameters
+greet name:
+    echo "Hello, {{name}}!"
+
+# Command with default parameter
+serve port="8000":
+    python -m http.server {{port}}
+```
+
+For more information, visit: https://just.systems/man/en/
 
 ## Development Philosophy
 
