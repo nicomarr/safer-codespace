@@ -13,5 +13,5 @@
       "settings": {}
     }
   },
-  "postCreateCommand": "pip install uv && uv tool install llm && llm install llm-github-models && llm models default github/gpt-4.1 && npm install -g @anthropic-ai/claude-code rust-just && go install github.com/charmbracelet/glow/v2@latest"
+  "postCreateCommand": "pip install uv && uv tool install llm && llm install llm-github-models llm-anthropic llm-gemini && llm models default github/gpt-4.1 && npm install -g @anthropic-ai/claude-code rust-just && go install github.com/charmbracelet/glow/v2@latest"
 }
