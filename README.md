@@ -22,6 +22,8 @@ This devcontainer comes with the following tools automatically installed:
 - **Claude Code** - Anthropic's official CLI for Claude (installed globally via npm)
 - **llm** - Command-line tool for interacting with Large Language Models
 - **llm-github-models** - Plugin for accessing GitHub's model marketplace
+- **llm-anthropic** - Plugin for accessing Anthropic's Claude models
+- **llm-gemini** - Plugin for accessing Google's Gemini models
 - **GitHub GPT-4o** - Pre-configured as the default model for `llm`
 
 ### Documentation Tools
