@@ -3,7 +3,7 @@
   "image": "mcr.microsoft.com/devcontainers/python:3.13-bullseye",
   "features": {
     "ghcr.io/devcontainers/features/node:1": {
-      "version": "latest"
+      "version": "24"
     },
     "ghcr.io/devcontainers/features/go:1": {}
   },

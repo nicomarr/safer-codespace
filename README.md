@@ -76,7 +76,7 @@ This devcontainer comes with the following tools automatically installed:
 - **pip** - Python package installer
 
 ### Node.js Environment
-- **Node.js** (latest LTS)
+- **Node.js 24.x** (pinned for Claude Code compatibility - Node.js 25 is currently not supported)
 - **npm** (latest)
 
 ### Go Environment
