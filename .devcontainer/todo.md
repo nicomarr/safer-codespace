@@ -3,58 +3,45 @@
 ## Pending Tasks
 
 ### 0. Add Required Container Capabilities (CRITICAL)
-**Status:** BLOCKING - Script cannot run without this
+**Status:** ✅ COMPLETED
 
-The container currently lacks `CAP_NET_ADMIN` capability required for iptables operations.
+Added `CAP_NET_ADMIN` capability to devcontainer.json runArgs.
 
-**Required devcontainer.json changes:**
-```json
-"runArgs": [
-    "--cap-add=NET_ADMIN"
-]
-```
-
-**Current capabilities:** cap_net_bind_service, cap_net_raw (insufficient)
-**Missing:** CAP_NET_ADMIN (required for iptables/ipset operations)
+**Commit:** ba793d7 - feat(devcontainer): add network admin capabilities and firewall testing tools
 
 ### 1. Add Firewall Dependencies to devcontainer.json
-After manual testing confirms the firewall script works correctly, add the following packages to the devcontainer configuration:
+**Status:** ✅ COMPLETED
 
-**Required Packages:**
+Added all required packages to postCreateCommand:
 - `iptables` - Firewall management tool
 - `ipset` - IP set management for efficient rule handling
 - `dnsutils` - DNS tools (provides `dig` command)
 - `aggregate` - CIDR aggregation utility
 
-**Installation Method:**
-Add to `features` section or as a `postCreateCommand` in devcontainer.json:
-```json
-"postCreateCommand": "sudo apt-get update && sudo apt-get install -y iptables ipset dnsutils aggregate"
-```
+**Commit:** ba793d7 - feat(devcontainer): add network admin capabilities and firewall testing tools
 
 ### 2. Integrate init-firewall.sh into Container Startup
-Determine the best approach:
-- Option A: Run as part of `postCreateCommand`
-- Option B: Add as a lifecycle script
-- Option C: Manual execution when needed
+**Status:** ✅ COMPLETED - Using Option A
 
-**Considerations:**
-- Script requires sudo/root privileges
-- May need to handle Docker DNS preservation
-- Should validate connectivity after setup
+Added init-firewall.sh to the end of postCreateCommand. The firewall is now automatically configured when the devcontainer is created.
+
+**Commit:** 75d0909 - feat(devcontainer): enable firewall by default in postCreateCommand
 
 ### 3. Testing Checklist
 - [x] Dependencies installed manually (iptables, ipset, dnsutils, aggregate)
 - [x] Network connectivity test BEFORE firewall - all required endpoints accessible
-- [x] Created disable-firewall.sh script for testing (to be removed after validation)
-- [ ] Verify script runs without errors (blocked by missing CAP_NET_ADMIN)
-- [ ] Confirm GitHub API access works
-- [ ] Confirm blocked domains (example.com) are unreachable
-- [ ] Test npm package installation
-- [ ] Test VS Code marketplace access
-- [ ] Test Anthropic API connectivity
-- [ ] Test toggling firewall on/off with disable-firewall.sh
-- [ ] Remove disable-firewall.sh after successful testing
+- [x] Created disable-firewall.sh script for testing (KEPT for debugging purposes)
+- [x] Verify script runs without errors
+- [x] Confirm GitHub API access works
+- [x] Confirm blocked domains (example.com) are unreachable
+- [x] Test npm package installation
+- [x] Test VS Code marketplace access
+- [x] Test Anthropic API connectivity
+- [x] Test PyPI access
+- [x] Test GitHub Models API access
+- [x] Test Gemini API access
+- [x] Test Go modules (proxy.golang.org) access
+- [x] Test toggling firewall on/off with disable-firewall.sh
 
 ## Test Results
 
@@ -71,15 +58,49 @@ Ran `/workspaces/claude-codespace/tests/network/test_connectivity.sh`
 - Go modules: ✓ CONNECTED
 - example.com: ✓ CONNECTED (expected before firewall, should be blocked after)
 
-All required development endpoints are accessible. Ready to apply firewall restrictions once container has CAP_NET_ADMIN capability.
+### Post-Firewall Network Connectivity (2025-10-16)
+After applying firewall with all required endpoints configured:
 
-## Notes
-- Dependencies installed manually on: 2025-10-16
-- Script location: `/workspaces/claude-codespace/.devcontainer/init-firewall.sh`
-- Disable script created: `/workspaces/claude-codespace/.devcontainer/disable-firewall.sh` (temporary, for testing only)
-- Branch: `feature/devcontainer-firewall`
-- **Next step:** Commit current work, then update devcontainer.json and rebuild
+**Results:**
+- PyPI: ✅ CONNECTED
+- GitHub API: ✅ CONNECTED
+- GitHub Models: ✅ CONNECTED
+- Anthropic API: ✅ CONNECTED
+- Gemini API: ✅ CONNECTED
+- npm registry: ✅ CONNECTED
+- Go modules: ✅ CONNECTED
+- example.com: ✅ BLOCKED (firewall working correctly)
 
-## Cleanup Tasks (Post-Testing)
-- [ ] Remove `disable-firewall.sh` from repository (testing utility only, not needed in production)
-- [ ] Consider adding disable script to `.gitignore` if kept locally for development
+All required development endpoints remain accessible while unauthorized domains are blocked.
+
+## Implementation Summary
+
+### Completed (2025-10-16)
+All tasks completed successfully!
+
+**Key Changes:**
+1. Added `CAP_NET_ADMIN` capability to devcontainer.json
+2. Added firewall dependencies (iptables, ipset, dnsutils, aggregate) to postCreateCommand
+3. Created init-firewall.sh with support for all required endpoints:
+   - GitHub (web, api, git)
+   - npm registry
+   - PyPI and Python package hosting
+   - Anthropic API
+   - Azure GitHub Models API
+   - Google Gemini API
+   - Go modules (proxy.golang.org, sum.golang.org)
+   - VS Code marketplace and updates
+4. Added firewall initialization to postCreateCommand (runs automatically)
+5. Kept disable-firewall.sh for debugging purposes
+
+**Commits:**
+- `ba793d7` - feat(devcontainer): add network admin capabilities and firewall testing tools
+- `85ffa04` - feat(firewall): add support for PyPI, Azure Models, Gemini, and Go modules
+- `75d0909` - feat(devcontainer): enable firewall by default in postCreateCommand
+
+**Scripts:**
+- `/workspaces/claude-codespace/.devcontainer/init-firewall.sh` - Enables firewall (runs automatically)
+- `/workspaces/claude-codespace/.devcontainer/disable-firewall.sh` - Disables firewall (for debugging)
+
+**Branch:** `feature/devcontainer-firewall`
+**Status:** ✅ Ready for PR
