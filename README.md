@@ -2,6 +2,70 @@
 
 A template repository to launch a new GitHub Codespaces instance with AI development tools pre-configured and ready to use.
 
+## Security Features
+
+### Network Firewall (Default: Enabled)
+
+This devcontainer includes an **automatic network firewall** that restricts outbound connections to only approved development endpoints. This provides defense-in-depth security for your development environment.
+
+**What's Protected:**
+- Blocks all outbound traffic by default
+- Only allows connections to pre-approved domains required for development
+- Prevents unauthorized data exfiltration
+- Validates firewall rules automatically on startup
+
+**Approved Endpoints:**
+- GitHub (web, API, git operations)
+- npm registry
+- PyPI and Python package hosting
+- Anthropic API
+- Azure GitHub Models API
+- Google Gemini API
+- Go modules (proxy.golang.org, sum.golang.org)
+- VS Code marketplace and updates
+
+**Testing the Firewall:**
+```bash
+# Run comprehensive connectivity test
+bash tests/network/test_connectivity.sh
+
+# This will verify:
+# - All required development endpoints are accessible
+# - Unauthorized domains (example.com) are blocked
+```
+
+**Adding Domains to the Allowlist:**
+
+To add new domains to the firewall allowlist, edit `.devcontainer/init-firewall.sh`:
+
+1. Locate the domain resolution loop (around line 67):
+   ```bash
+   for domain in \
+       "registry.npmjs.org" \
+       "api.anthropic.com" \
+       # ... existing domains ...
+   ```
+
+2. Add your domain to the list:
+   ```bash
+   for domain in \
+       "registry.npmjs.org" \
+       "api.anthropic.com" \
+       "your-new-domain.com" \
+       # ... rest of domains ...
+   ```
+
+3. Rebuild the devcontainer or manually run:
+   ```bash
+   sudo /workspaces/claude-codespace/.devcontainer/init-firewall.sh
+   ```
+
+**Important Notes:**
+- The firewall uses DNS resolution, so domain IPs are resolved at container startup
+- CDNs and services with dynamic IPs are supported through DNS updates
+- GitHub IP ranges are fetched from GitHub's API and aggregated automatically
+- The firewall preserves Docker's internal DNS resolution (127.0.0.11)
+
 ## What's Preinstalled
 
 This devcontainer comes with the following tools automatically installed:
