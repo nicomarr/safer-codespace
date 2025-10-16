@@ -46,12 +46,15 @@ Determine the best approach:
 ### 3. Testing Checklist
 - [x] Dependencies installed manually (iptables, ipset, dnsutils, aggregate)
 - [x] Network connectivity test BEFORE firewall - all required endpoints accessible
+- [x] Created disable-firewall.sh script for testing (to be removed after validation)
 - [ ] Verify script runs without errors (blocked by missing CAP_NET_ADMIN)
 - [ ] Confirm GitHub API access works
 - [ ] Confirm blocked domains (example.com) are unreachable
 - [ ] Test npm package installation
 - [ ] Test VS Code marketplace access
 - [ ] Test Anthropic API connectivity
+- [ ] Test toggling firewall on/off with disable-firewall.sh
+- [ ] Remove disable-firewall.sh after successful testing
 
 ## Test Results
 
@@ -73,5 +76,10 @@ All required development endpoints are accessible. Ready to apply firewall restr
 ## Notes
 - Dependencies installed manually on: 2025-10-16
 - Script location: `/workspaces/claude-codespace/.devcontainer/init-firewall.sh`
+- Disable script created: `/workspaces/claude-codespace/.devcontainer/disable-firewall.sh` (temporary, for testing only)
 - Branch: `feature/devcontainer-firewall`
 - **Next step:** Commit current work, then update devcontainer.json and rebuild
+
+## Cleanup Tasks (Post-Testing)
+- [ ] Remove `disable-firewall.sh` from repository (testing utility only, not needed in production)
+- [ ] Consider adding disable script to `.gitignore` if kept locally for development

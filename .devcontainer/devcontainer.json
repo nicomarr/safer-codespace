@@ -7,11 +7,15 @@
     },
     "ghcr.io/devcontainers/features/go:1": {}
   },
+  "runArgs": [
+    "--cap-add=NET_ADMIN",
+    "--cap-add=NET_RAW"
+  ],
   "customizations": {
     "vscode": {
       "extensions": [],
       "settings": {}
     }
   },
-  "postCreateCommand": "pip install uv && uv tool install llm && llm install llm-github-models llm-anthropic llm-gemini && llm models default github/gpt-4.1 && npm install -g @anthropic-ai/claude-code rust-just && go install github.com/charmbracelet/glow/v2@latest"
+  "postCreateCommand": "sudo apt-get update && sudo apt-get install -y iptables ipset dnsutils aggregate && pip install uv && uv tool install llm && llm install llm-github-models llm-anthropic llm-gemini && llm models default github/gpt-4.1 && npm install -g @anthropic-ai/claude-code rust-just && go install github.com/charmbracelet/glow/v2@latest"
 }

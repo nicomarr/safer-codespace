@@ -31,7 +31,7 @@
  done
 
  # Test additional endpoints that should not be reachable based on firewall rules, e.g www.example.com
-    echo "Testing endpoints that should NOT be reachable..."
+    echo "Testing endpoints that should NOT be reachable if firewall is turned on..."
     unreachable_endpoints=(
         "Example Domain:http://www.example.com"
     )
@@ -42,8 +42,8 @@
 
         printf "Testing %-25s " "$name:"
         if curl -s --connect-timeout 5 --max-time 10 "$url" > /dev/null 2>&1; then
-            echo "CONNECTED (unexpected) - TEST FAILED"
+            echo "CONNECTED - Devcontainer firewall is turned off or not working as expected!"
         else
-            echo "NOT REACHABLE (expected) - TEST PASSED"
+            echo "NOT REACHABLE - Devcontainer firewall is working as expected!"
         fi
     done
