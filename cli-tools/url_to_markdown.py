@@ -20,9 +20,8 @@ SECURITY: This tool implements defense-in-depth against prompt injection attacks
 - Clear security warnings in output
 """
 
-from typing import Optional
 from pathlib import Path
-from datetime import datetime
+from datetime import datetime as dt
 from urllib.parse import urlparse
 import re
 
@@ -204,7 +203,7 @@ Allowed content types: {', '.join(ALLOWED_CONTENT_TYPES)}
         markdown_content = html_to_text.handle(cleaned_html)
 
         # Add metadata header with security warnings
-        timestamp_iso = datetime.now().isoformat()
+        timestamp_iso = dt.now().isoformat()
         full_markdown = f"""# Web Content from URL
 
 ⚠️ **SECURITY WARNING** ⚠️
@@ -238,7 +237,7 @@ See: https://simonwillison.net/2025/Jun/16/the-lethal-trifecta/
 
     try:
         # Generate safe filename
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        timestamp = dt.now().strftime("%Y%m%d_%H%M%S")
 
         # Extract domain and path for filename
         url_slug = re.sub(r'https?://', '', url)
