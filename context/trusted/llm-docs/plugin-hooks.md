@@ -3,9 +3,6 @@ Title: Tools - LLM
 URL Source: https://llm.datasette.io/en/stable/tools.html
 
 Markdown Content:
-[Back to top](https://llm.datasette.io/en/stable/tools.html#)
-
-Toggle table of contents sidebar
 
 Many Large Language Models have been trained to execute tools as part of responding to a prompt. LLM supports tool usage with both the command-line interface and the Python API.
 
