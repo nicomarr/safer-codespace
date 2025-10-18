@@ -33,36 +33,23 @@ from lxml.html.clean import Cleaner
 
 # SECURITY: Allow-list of trusted documentation domains
 # These are known documentation sites for software development
-ALLOWED_DOMAINS = {
+ALLOWED_DOMAINS: set[str] = {
     # Python
     'docs.python.org',
     'pypi.org',
-    'readthedocs.io',
-    'readthedocs.org',
 
     # JavaScript/Node
     'developer.mozilla.org',
     'docs.npmjs.com',
     'nodejs.org',
 
-    # Rust
-    'docs.rs',
-    'doc.rust-lang.org',
-
-    # Go
-    'golang.org',
-    'go.dev',
-    'pkg.go.dev',
-
     # Other languages
     'docs.oracle.com',  # Java
-    'docs.microsoft.com',  # .NET, etc
-    'ruby-doc.org',
+    'learn.microsoft.com',  # .NET, etc
 
     # Frameworks & Tools
     'react.dev',
     'vuejs.org',
-    'angular.io',
     'flask.palletsprojects.com',
     'docs.djangoproject.com',
 
@@ -79,7 +66,7 @@ ALLOWED_DOMAINS = {
     'llm.datasette.io',
     'datasette.io',
     'platform.openai.com',
-    'docs.anthropic.com',
+    'docs.claude.com',
     'ai.google.dev',
 
     # Cloud providers (docs only)
@@ -89,7 +76,7 @@ ALLOWED_DOMAINS = {
 }
 
 # SECURITY: Allowed content types (HTML only)
-ALLOWED_CONTENT_TYPES = {
+ALLOWED_CONTENT_TYPES: set[str] = {
     'text/html',
     'application/xhtml+xml',
 }
@@ -141,8 +128,7 @@ To add a new domain, edit the ALLOWED_DOMAINS list in this script.
 Currently allowed domains include:
 - docs.python.org, pypi.org
 - developer.mozilla.org, nodejs.org
-- golang.org, docs.rs
-- llm.datasette.io, docs.anthropic.com
+- llm.datasette.io, docs.claude.com
 - and more (see ALLOWED_DOMAINS in script)
 """
 
@@ -216,7 +202,7 @@ potentially untrusted, even though it comes from an allow-listed documentation s
 - Access to external communication tools (email, HTTP, etc.)
 - Ability to execute code or commands
 
-See: https://simonwillison.net/2025/Jun/16/the-lethal-trifecta/
+See: https://simonwillison.net/2025/Jun/16/the-lethal-trifecta/ for more details on prompt injection risks.
 
 ---
 
