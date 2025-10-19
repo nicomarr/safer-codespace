@@ -38,7 +38,7 @@ Get up and running in 3 steps:
   # For simple tasks, questions and text processing, use llm CLI tool
   llm "explain this error" < error.log
 
-  Or use the pipe syntax:
+  # Or use the pipe syntax:
   git diff --staged | llm -s "Generate a conventional commit message from these changes"
   ```
 
