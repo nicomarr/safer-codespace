@@ -12,15 +12,15 @@ An **experimental** development environment exploring defense-in-depth approache
 
 ## Table of Contents
 
-- [Quick Start](#-quick-start)
-- [Prerequisites](#-prerequisites)
-- [What's Included](#-whats-included)
-- [Choosing the Right Tool](#-choosing-the-right-tool)
-- [Tool Usage Guides](#-tool-usage-guides)
-- [Understanding the Security Model](#-understanding-the-security-model)
-- [Additional Resources](#-additional-resources)
-- [Troubleshooting](#-troubleshooting)
-- [Contributing](#-contributing)
+- [Quick Start](#quick-start)
+- [Prerequisites](#prerequisites)
+- [What's Included](#whats-included)
+- [Choosing the Right Tool](#choosing-the-right-tool)
+- [Tool Usage Guides](#tool-usage-guides)
+- [Understanding the Security Model](#understanding-the-security-model)
+- [Additional Resources](#additional-resources)
+- [Troubleshooting](#troubleshooting)
+- [Contributing](#contributing)
 
 ---
 
