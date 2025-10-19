@@ -17,5 +17,5 @@
       "settings": {}
     }
   },
-  "postCreateCommand": "sudo apt-get update && sudo apt-get install -y iptables ipset dnsutils aggregate && pip install uv && uv tool install llm && llm install llm-github-models llm-anthropic llm-gemini && llm models default github/gpt-4.1 && npm install -g @anthropic-ai/claude-code rust-just && go install github.com/charmbracelet/glow/v2@latest && sudo /workspaces/claude-codespace/.devcontainer/init-firewall.sh"
+  "postCreateCommand": "sudo apt-get update && sudo apt-get install -y iptables ipset dnsutils aggregate && pip install uv && uv tool install llm && llm install llm-github-models llm-anthropic llm-gemini && llm models default github/gpt-4.1 && npm install -g @anthropic-ai/claude-code rust-just && go install github.com/charmbracelet/glow/v2@latest && sudo /workspaces/safer-codespace/.devcontainer/init-firewall.sh"
 }

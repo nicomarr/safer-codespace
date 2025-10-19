@@ -290,7 +290,7 @@ This template uses **multiple redundant layers** rather than relying on any sing
 
 **Test the firewall:**
 ```bash
-bash tests/network/test_connectivity.sh
+tests/network/test_connectivity.sh
 ```
 
 **Add new domains:**
