@@ -1,282 +1,449 @@
-# Claude Codespace
+# Safer Codespace
 
-A template repository to launch a new GitHub Codespaces instance with AI development tools pre-configured and ready to use.
+![Experimental](https://img.shields.io/badge/status-experimental-orange)
+![Security Focused](https://img.shields.io/badge/security-defense--in--depth-blue)
+![License](https://img.shields.io/badge/license-MIT-green)
 
-## Security Features
+An **experimental** development environment exploring defense-in-depth approaches to mitigate **prompt injection** risks when using AI coding assistants.
 
-### Network Firewall (Default: Enabled)
+> **⚠️ Security Notice:** This template uses multiple security layers (network firewall, content segregation, human review) to reduce prompt injection risks. While no approach is perfect, these controls make data exfiltration significantly harder. [Learn more about the threat model →](#-understanding-the-security-model)
 
-This devcontainer includes an **automatic network firewall** that restricts outbound connections to only approved development endpoints. This provides defense-in-depth security for your development environment.
+---
 
-**What's Protected:**
-- Blocks all outbound traffic by default
-- Only allows connections to pre-approved domains required for development
-- Prevents unauthorized data exfiltration
-- Validates firewall rules automatically on startup
+## Table of Contents
 
-**Approved Endpoints:**
-- GitHub (web, API, git operations)
-- npm registry
-- PyPI and Python package hosting
-- Anthropic API
-- Azure GitHub Models API
-- Google Gemini API
-- Go modules (proxy.golang.org, sum.golang.org)
-- VS Code marketplace and updates
+- [Quick Start](#-quick-start)
+- [Prerequisites](#-prerequisites)
+- [What's Included](#-whats-included)
+- [Choosing the Right Tool](#-choosing-the-right-tool)
+- [Tool Usage Guides](#-tool-usage-guides)
+- [Understanding the Security Model](#-understanding-the-security-model)
+- [Additional Resources](#-additional-resources)
+- [Troubleshooting](#-troubleshooting)
+- [Contributing](#-contributing)
 
-**Testing the Firewall:**
-```bash
-# Run comprehensive connectivity test
-bash tests/network/test_connectivity.sh
+---
 
-# This will verify:
-# - All required development endpoints are accessible
-# - Unauthorized domains (example.com) are blocked
-```
+## Quick Start
 
-**Adding Domains to the Allowlist:**
+Get up and running in 3 steps:
 
-To add new domains to the firewall allowlist, edit `.devcontainer/init-firewall.sh`:
+1. **Click "Use this template"** to create your repository
+2. **Open in GitHub Codespaces** (or your preferred devcontainer host)
+3. **Start coding** with your choice of AI tool:
+  ```bash
+  # For complex, multi-step tasks with file access, use Claude Code
+  claude
 
-1. Locate the domain resolution loop (around line 67):
-   ```bash
-   for domain in \
-       "registry.npmjs.org" \
-       "api.anthropic.com" \
-       # ... existing domains ...
-   ```
+  # For simple tasks, questions and text processing, use llm CLI
+  llm "explain this error" < error.log
 
-2. Add your domain to the list:
-   ```bash
-   for domain in \
-       "registry.npmjs.org" \
-       "api.anthropic.com" \
-       "your-new-domain.com" \
-       # ... rest of domains ...
-   ```
+  Or use the pipe syntax:
+  git diff --staged | llm -s "Generate a conventional commit message from these changes"
+  ```
 
-3. Rebuild the devcontainer or manually run:
-   ```bash
-   sudo /workspaces/claude-codespace/.devcontainer/init-firewall.sh
-   ```
+That's it! All tools are pre-installed and the security firewall is automatically configured.
 
-**Important Notes:**
-- The firewall uses DNS resolution, so domain IPs are resolved at container startup
-- CDNs and services with dynamic IPs are supported through DNS updates
-- GitHub IP ranges are fetched from GitHub's API and aggregated automatically
-- The firewall preserves Docker's internal DNS resolution (127.0.0.11)
+---
 
-## What's Preinstalled
+## Prerequisites
 
-This devcontainer comes with the following tools automatically installed:
+Before using this template, ensure you have:
 
-### Python Environment
-- **Python 3.13** (latest stable)
-- **uv** - Fast Python package manager
-- **pip** - Python package installer
+- **Required:**
+  - [GitHub account](https://github.com/signup) (for Codespaces or template usage)
+  - [Docker Desktop](https://www.docker.com/products/docker-desktop/) (for local devcontainer usage)
 
-### Node.js Environment
-- **Node.js 24.x** (pinned for Claude Code compatibility - Node.js 25 is currently not supported)
-- **npm** (latest)
+- **Optional (for AI features):**
+  - [Anthropic API key](https://console.anthropic.com/) (for Claude Code and `llm` Claude models)
+  - [GitHub Models access](https://github.com/marketplace/models) (free GPT-4o via `llm` - default)
+  - [Google AI Studio key](https://aistudio.google.com/) (for `llm` Gemini models)
 
-### Go Environment
-- **Go** (latest stable)
+The default configuration uses **GitHub's free GPT-4o** model, so you can start immediately without any API keys.
+
+---
+
+## What's Included
+
+This devcontainer comes pre-configured with:
 
 ### AI Development Tools
-- **Claude Code** - Anthropic's official CLI for Claude (installed globally via npm)
-- **llm** - Command-line tool for interacting with Large Language Models
-- **llm-github-models** - Plugin for accessing GitHub's model marketplace
-- **llm-anthropic** - Plugin for accessing Anthropic's Claude models
-- **llm-gemini** - Plugin for accessing Google's Gemini models
-- **GitHub GPT-4o** - Pre-configured as the default model for `llm`
+- Anthropic's **[Claude Code](https://docs.claude.com/en/docs/claude-code)** for interactive AI assistance with file access and command execution
+  - Default: Claude Code (requires Anthropic API key)
+  - Plugins: File System, Shell Command Execution
+- **[llm](https://llm.datasette.io/)** developed by Simon Willison, A CLI tool for interacting with OpenAI, Anthropic’s Claude, Google’s Gemini, Meta’s Llama and dozens of other Large Language Models
+  - Default: GitHub GPT-4o (free, no API key required)
+  - Plugins: Anthropic Claude, Google Gemini, GitHub Models
 
-### Documentation Tools
-- **glow** - Render markdown in the terminal with style
+### Language Environments
+- **Python 3.13** with `uv` (fast package manager) and `pip`
+- **Node.js 24.x** with `npm` (pinned for Claude Code compatibility)
+- **Go** (latest stable)
 
-### Task Automation
-- **just** - Command runner for project-specific tasks (similar to make, but simpler)
+### Development Tools
+- **[glow](https://github.com/charmbracelet/glow)** - Beautiful markdown rendering in terminal
+- **[just](https://just.systems/)** - Simple command runner (like make, but better)
 
-## Getting Started
+### Security Features
+- **Network firewall** - Blocks unauthorized outbound connections (auto-configured)
+- **Content segregation** - Separate `context/trusted/` and `context/untrusted/` directories
+- **No GitHub CLI** - Intentionally excluded to prevent potential data exfiltration
 
-### Using Claude Code
-Claude Code is Anthropic's interactive CLI tool for AI-assisted development:
+---
+
+## Choosing the Right Tool
+
+**Not every task needs an AI agent.** Choose the right tool for your needs:
+
+### When to use Claude Code
+
+Best for **complex, multi-step tasks** where you need file access and command execution:
+
+- **Complex refactoring** across multiple files
+- **Understanding a codebase** not familiar to you
+- **Debugging complex issues** requiring investigation
+- **Building features** from scratch
+- **High complexity tasks** where you know where you want to go, but you don't know exactly how you're going to get there, what tools, and what information you might need to arrive at the end state
 
 ```bash
-# Start Claude Code in the current directory
+# Start interactive session
 claude
 
-# Start with a specific prompt
+# Start with a specific task
+claude "Give me an overview of this codebase"
+```
+
+### When to use the `llm` CLI tool
+
+Perfect for **single-shot tasks** that don't need file access:
+
+- **Explain errors** or code snippets
+- **Generate text** (commit messages, documentation)
+- **Quick code reviews** on diffs
+- **Format or transform** data
+- **Answer questions** about programming concepts
+
+```bash
+# Generate commit message from staged changes
+git diff --staged | llm -s "write a conventional commit message for these changes"
+
+# Quick code review
+git diff main | llm "review these changes for potential issues"
+
+# Ask a question
+cat script.py | llm "explain what this code does"
+```
+
+**Security benefit:** `llm` cannot access your files or run commands out-of-the-box. Even if compromised by prompt injection, damage is limited to the text you explicitly provide.
+
+### When to skip AI altogether
+
+For **simple, routine tasks**, such as:
+
+- Basic git operations
+- Installing packages
+- Running tests
+- Simple config changes
+
+**Why?** Faster, safer, and you maintain direct control.
+
+---
+
+## Usage Guides
+
+### Claude Code
+
+Interactive AI assistant with file access and command execution capabilities.
+
+```bash
+# Start Claude Code
+claude
+
+# Start with a prompt
 claude "help me refactor this code"
 
-# View help and options
+# View options
 claude --help
 ```
 
-### Using llm CLI
-The `llm` tool provides command-line access to various language models:
+For detailed documentation: https://docs.claude.com/en/docs/claude-code/overview
+
+### llm CLI
+
+Command-line interface for various language models. Uses GitHub GPT-4o by default (no API key required).
 
 ```bash
-# Use the default model (GitHub GPT-4o)
+# Basic usage - pipe input to llm
+echo "Hello world" | llm "translate to Spanish"
+
+# Read from file
 llm "explain this code" < script.py
 
-# Alternative: pipe file contents using cat
+# Alternative: use cat to pipe file contents
 cat script.py | llm "explain this code"
 
-# Pipe any command output to llm
-echo "Hello world" | llm "translate to Spanish"
+# Interactive chat mode
+llm chat
 
 # List available models
 llm models list
 
-# Switch default model
-llm models default <model-name>
+# Change default model
+llm models default claude-3-5-sonnet-latest
 
-# Chat interactively
-llm chat
-
-# Get comprehensive help and see all available commands
+# View comprehensive help
 llm --help
-
-# Get help for specific subcommands
-llm models --help
-llm chat --help
 ```
 
-#### Available llm Commands
-Run `llm --help` to see all commands. Key commands include:
-
-- `llm prompt` - Execute a prompt (default command)
-- `llm chat` - Hold an ongoing chat with a model
+**Key commands:**
+- `llm prompt` - Execute a one-off prompt (default)
+- `llm chat` - Start an interactive conversation
 - `llm models` - Manage available models
-- `llm keys` - Manage stored API keys for different models
-- `llm logs` - Tools for exploring logged prompts and responses
-- `llm templates` - Manage stored prompt templates
-- `llm aliases` - Manage model aliases
-- `llm plugins` - List installed plugins
-- `llm install` - Install packages from PyPI into the LLM environment
-- `llm embed` - Embed text and store or return the result
-- `llm collections` - View and manage collections of embeddings
-- `llm similar` - Return top N similar IDs from a collection
+- `llm keys` - Configure API keys for different providers
+- `llm logs` - View prompt/response history
+- `llm templates` - Manage reusable prompt templates
 
-For detailed documentation, visit: https://llm.datasette.io/
+For detailed documentation: https://llm.datasette.io/
 
-### Python Development
+<details>
+<summary><strong>Python Development</strong></summary>
+
 ```bash
-# Install packages with uv (faster)
+# Install packages (fast method)
 uv pip install package-name
 
-# Or use traditional pip
+# Traditional pip
 pip install package-name
 
-# Run Python scripts
+# Run scripts
 python script.py
-
-# Start Python REPL
-python
 ```
+</details>
 
-### Node.js Development
+<details>
+<summary><strong>Node.js Development</strong></summary>
+
 ```bash
 # Install packages
 npm install package-name
 
-# Run scripts defined in package.json
+# Run package.json scripts
 npm run script-name
-
-# Start Node REPL
-node
 ```
+</details>
 
-### Go Development
+<details>
+<summary><strong>Go Development</strong></summary>
+
 ```bash
-# Initialize a new Go module
+# Initialize module
 go mod init module-name
 
-# Install Go packages
+# Install packages
 go get package-name
 
-# Run Go programs
+# Run programs
 go run main.go
-
-# Build Go programs
-go build
-
-# Install Go tools
-go install package-name@latest
 ```
+</details>
 
-### Using glow (Markdown Viewer)
+### Other Tools
+
+**glow** - Render markdown beautifully in your terminal:
 ```bash
-# View a markdown file with style in the terminal
-glow README.md
-
-# View the CLAUDE.md development guide
-glow CLAUDE.md
-
-# Browse all markdown files in current directory
-glow
-
-# Pipe markdown content to glow
-cat file.md | glow -
+glow README.md      # View a file
+glow                # Browse current directory
+cat file.md | glow  # Pipe content
 ```
 
-### Using just (Command Runner)
-`just` is a task automation tool that makes it easy to define and run project-specific commands. It uses a `justfile` to store command definitions.
-
+**just** - Run project-specific commands (defined in `justfile`):
 ```bash
-# List all available commands
-just --list
-
-# Run a specific command
-just command-name
-
-# Run a command with arguments
-just command-name arg1 arg2
-
-# Show what a command would do without running it
-just --dry-run command-name
-
-# View a specific command definition
-just --show command-name
+just --list              # Show available commands
+just command-name        # Run a command
+just --show command-name # View command definition
 ```
 
-#### Creating Commands in justfile
-A `justfile` contains command definitions written with simple syntax:
+---
 
-```just
-# Comment describing what this command does
-command-name:
-    command-to-run
-    another-command
+## Understanding the Security Model
 
-# Command with parameters
-greet name:
-    echo "Hello, {{name}}!"
+### The Threat: Prompt Injection and the "Lethal Trifecta"
 
-# Command with default parameter
-serve port="8000":
-    python -m http.server {{port}}
+When AI assistants have all three capabilities, attackers can inject malicious instructions into external content:
+
+1. **Access to Private Data** - Read your code, files, secrets
+2. **Exposure to Untrusted Content** - Process external docs, dependencies, web pages
+3. **Ability to Exfiltrate Data** - Send data out via network requests to attacker-controlled servers
+
+**Attack scenario:** Malicious instructions in documentation → AI reads your secrets → AI sends them to attacker's server.
+
+### Our Defense-in-Depth Approach
+
+This template uses **multiple redundant layers** rather than relying on any single defense:
+
+#### 1. Network Firewall (Mitigates Exfiltration)
+
+- **Blocks all outbound traffic** except to pre-approved development endpoints
+- **Allowed domains:** GitHub, npm, PyPI, Anthropic API, Google Gemini API, etc.
+- **Automatically configured** on container startup
+- **Validates rules** to ensure proper function
+
+**Test the firewall:**
+```bash
+bash tests/network/test_connectivity.sh
 ```
 
-For more information, visit: https://just.systems/man/en/
+**Add new domains:**
+Edit `.devcontainer/init-firewall.sh` and add to the domain list around line 67:
+```bash
+for domain in \
+    "registry.npmjs.org" \
+    "api.anthropic.com" \
+    "your-new-domain.com" \
+    # ... rest of domains
+```
 
-## Development Philosophy
+**Limitations:** Cannot prevent exfiltration to allowed domains (e.g., GitHub). Works best with other layers.
 
-This repository includes a comprehensive development guide in `CLAUDE.md` covering:
+#### 2. Content Segregation
 
+The `context/` directory separates vetted from unvetted content:
+
+```
+context/
+├── trusted/       # Human-reviewed content (safe to use)
+└── untrusted/     # External docs requiring review
+```
+
+**Recommended workflow:**
+
+1. **Fetch** external content using non-AI tools (`curl`, Jina Reader)
+2. **Save** to `context/untrusted/` with descriptive filenames
+3. **Review** yourself for malicious instructions:
+   - "Send passwords to..."
+   - "Ignore previous instructions..."
+   - Suspicious URLs or commands
+4. **Move** to `context/trusted/` after review
+5. **Reference** only `context/trusted/` with AI agents
+
+This ensures agents never directly process untrusted content.
+
+#### 3. Human Review (The Critical Layer)
+
+**Key principle:** Don't use AI to detect prompt injection attacks! Use human intelligence to review external content before providing it as context.
+
+#### 4. Tool Selection
+
+Choose less powerful tools when possible:
+- `llm` (no file access) over Claude Code for simple tasks
+- Manual commands over AI for routine operations
+
+### Why No GitHub CLI?
+
+The `gh` CLI is **intentionally excluded** as part of our security-first approach:
+
+- **Risk:** Could be used to exfiltrate data via issues, PRs, or gists
+- **Alternative:** Standard `git` commands handle most workflows
+- **If needed:** Install manually (`sudo apt install gh`) with full awareness of the risk
+
+### Learn More
+
+For detailed information about prompt injection:
+- Read the curated content in `context/trusted/simon-willison-weblog-content/`
+- Original 2022 post coining "prompt injection"
+- 2025 "lethal trifecta" framework
+- Real-world examples of attacks on major AI systems
+
+---
+
+## Additional Resources
+
+### Development Philosophy
+
+This repository includes `CLAUDE.md` with comprehensive guidelines on:
 - Literate Programming principles
 - MVP-first methodology (6-8 step rule)
 - Test-Driven Development practices
-- Python coding standards and style guide
+- Python coding standards
 - Git workflow with Conventional Commits
 
-Read `CLAUDE.md` for detailed guidelines on development practices.
+**View it:** `glow CLAUDE.md`
 
-## Using This Template
+### Security Resources
 
-1. Click "Use this template" to create a new repository
-2. Open in GitHub Codespaces
-3. Wait for the devcontainer to build (first time only)
-4. Start coding with `claude` or your preferred tools
+- **Prompt Injection Deep Dive:** `context/trusted/simon-willison-weblog-content/`
+- **GitHub Actions Risks:** `context/trusted/github-blog-posts/github-actions-workflow-injection-risks.md`
 
-All tools are automatically installed and configured during the container build process.
+---
+
+## Troubleshooting
+
+### Firewall Issues
+
+**Problem:** Can't connect to a required service
+
+**Solution:** Add the domain to `.devcontainer/init-firewall.sh` and rebuild:
+```bash
+sudo /workspaces/claude-codespace/.devcontainer/init-firewall.sh
+```
+
+### Claude Code Issues
+
+**Problem:** "Claude Code not found"
+
+**Solution:** Node.js 25+ is not supported. This template uses Node.js 24.x. Rebuild the container.
+
+### llm Issues
+
+**Problem:** "No API key configured"
+
+**Solution:** The default GitHub GPT-4o model should work without keys. If using other models:
+```bash
+# Set API keys
+llm keys set anthropic
+llm keys set openai
+
+# Verify models are available
+llm models list
+```
+
+**Problem:** `llm` command not found
+
+**Solution:** Rebuild the devcontainer. The `llm` tool is installed during container build.
+
+### General Container Issues
+
+**Problem:** Tools not installed or outdated
+
+**Solution:** Rebuild the devcontainer:
+- In VS Code: Command Palette → "Dev Containers: Rebuild Container"
+- In GitHub Codespaces: Rebuild from the Codespaces menu
+
+---
+
+## Contributing
+
+This is an **experimental** repository exploring prompt injection mitigations. We welcome:
+
+- **Bug reports** - File an issue describing the problem
+- **Security feedback** - Share your perspective on the defense-in-depth approach
+- **Tool suggestions** - Propose additions that align with our security model
+- **Documentation improvements** - Help make this more accessible
+
+**Note:** We do not claim to have "solved" prompt injection. This template explores practical mitigation strategies using defense-in-depth principles.
+
+### Providing Feedback
+
+1. **GitHub Issues** - For bugs, feature requests, or questions
+2. **Pull Requests** - For documentation or tooling improvements
+3. **Discussions** - For broader conversations about security approaches
+
+---
+
+## License
+
+MIT License - See LICENSE file for details
+
+---
+
+**Built by the security-conscious developer community. Use at your own risk and always review external content before exposing it to AI agents.**
