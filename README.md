@@ -6,7 +6,7 @@
 
 An **experimental** development environment exploring defense-in-depth approaches to mitigate **prompt injection** risks when using AI coding assistants.
 
-> **⚠️ Security Notice:** This template uses multiple security layers (network firewall, content segregation, human review) to reduce prompt injection risks. While no approach is perfect, these controls make data exfiltration significantly harder. [Learn more about the threat model →](#-understanding-the-security-model)
+> **⚠️ Security Notice:** This template uses multiple security layers (network firewall, content segregation, human review) to reduce prompt injection risks. While no approach is perfect, these controls make data exfiltration significantly harder. [Learn more about the threat model →](#understanding-the-security-model)
 
 ---
 
