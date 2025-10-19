@@ -35,7 +35,7 @@ Get up and running in 3 steps:
   # For complex, multi-step tasks with file access, use Claude Code
   claude
 
-  # For simple tasks, questions and text processing, use llm CLI
+  # For simple tasks, questions and text processing, use llm CLI tool
   llm "explain this error" < error.log
 
   Or use the pipe syntax:
