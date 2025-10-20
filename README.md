@@ -97,13 +97,13 @@ This devcontainer comes pre-configured with:
 
 ### When to use Claude Code
 
-Best for **complex, multi-step tasks** where you need file access and command execution:
+Best for **focused development tasks** where you need file access and iterative assistance:
 
-- **Complex refactoring** across multiple files
-- **Understanding a codebase** not familiar to you
-- **Debugging complex issues** requiring investigation
-- **Building features** from scratch
-- **High complexity tasks** where you know where you want to go, but you don't know exactly how you're going to get there, what tools, and what information you might need to arrive at the end state
+- **Boilerplate in unfamiliar languages** - You know the goal but not the specific syntax or patterns
+- **Test-driven development** - Draft test cases and develop iteratively with Claude's guidance
+- **Codebase exploration** - Understand existing code through Claude's search and analysis capabilities
+- **Simple features from scratch** - Build UIs or functionality with minimal dependencies
+- **Targeted refactoring** - Modify existing code patterns across related files
 
 ```bash
 # Start interactive session
@@ -115,13 +115,14 @@ claude "Give me an overview of this codebase"
 
 ### When to use the `llm` CLI tool
 
-Perfect for **single-shot tasks** that don't need file access:
+Perfect for **text processing tasks** that don't need file access or command execution. Particularly useful because you can **pipe output from other CLI tools** directly to it:
 
-- **Explain errors** or code snippets
-- **Generate text** (commit messages, documentation)
-- **Quick code reviews** on diffs
-- **Format or transform** data
-- **Answer questions** about programming concepts
+- **Explain errors or code snippets** - Paste error messages or functions for quick analysis
+- **Generate commit messages** - Create conventional commits from staged changes
+- **Quick code reviews** - Analyze diffs for potential issues or improvements
+- **Explore Git history** - Analyze commit logs, changes, and project evolution patterns
+- **Transform data formats** - Convert between JSON, CSV, markdown, or other text formats
+- **Programming Q&A** - Get answers about syntax, concepts, or best practices
 
 ```bash
 # Generate commit message from staged changes
@@ -135,6 +136,18 @@ cat script.py | llm "explain what this code does"
 ```
 
 **Security benefit:** `llm` cannot access your files or run commands out-of-the-box. Even if compromised by prompt injection, damage is limited to the text you explicitly provide.
+
+### When to use VS Code with LLM integration
+
+Perfect for **controlled, inline code editing and completion** when you want to restrict changes to specific files or sections:
+
+- **Targeted code modifications** - Edit specific functions or code blocks without affecting other files
+- **Inline documentation** - Generate comments, docstrings, type hints, or explanations within existing code
+- **Code completion and suggestions** - Get LLM assistance while maintaining full control over what you write
+- **Refactoring specific sections** - Modify code patterns within a single file or selected region
+- **Language-specific optimizations** - Improve syntax, or performance in focused code sections
+
+This approach gives you the benefit of LLM assistance while ensuring changes remain scoped to exactly what you want to modify.
 
 ### When to skip AI altogether
 
