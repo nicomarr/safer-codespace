@@ -1,4 +1,4 @@
-Title: Claude Code Best Practices
+# Claude Code Best Practices
 
 URL Source: https://www.anthropic.com/engineering/claude-code-best-practices
 
@@ -380,17 +380,7 @@ Some tips:
 
 For both of these use cases, it can be helpful to use the `--verbose` flag for debugging the Claude invocation. We generally recommend turning verbose mode off in production for cleaner output.
 
-What are your tips and best practices for working with Claude Code? Tag @AnthropicAI so we can see what you're building!
-
 Acknowledgements
 ----------------
 
 Written by Boris Cherny. This work draws upon best practices from across the broader Claude Code user community, whose creative approaches and workflows continue to inspire us. Special thanks also to Daisy Hollman, Ashwin Bhat, Cat Wu, Sid Bidasaria, Cal Rueb, Nodir Turakulov, Barry Zhang, Drew Hodun and many other Anthropic engineers whose valuable insights and practical experience with Claude Code helped shape these recommendations.
-
-![Image 7: Interlocking puzzle piece with complex geometric shape and detailed surface texture](https://www-cdn.anthropic.com/images/4zrzovbb/website/43abe7e54b56a891e74a8542944dfbd33f07f49c-1000x1000.svg)
-
-### Looking to learn more?
-
-Master API development, Model Context Protocol, and Claude Code with courses on Anthropic Academy. Earn certificates upon completion.
-
-[Explore courses](https://anthropic.skilljar.com/)
