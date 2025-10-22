@@ -164,3 +164,10 @@ credentials.json
 
 # Local agent instructions
 CLAUDE.local.md
+
+# Temporary files, e.g binary or build files
+tmp/
+temp/
+
+# SpecStory files
+.specstory/
