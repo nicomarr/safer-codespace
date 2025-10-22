@@ -161,3 +161,6 @@ nosetests.xml
 *.key
 secrets.yaml
 credentials.json
+
+# Local agent instructions
+CLAUDE.local.md
