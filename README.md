@@ -35,6 +35,9 @@ Get up and running in 3 steps:
   # For complex, multi-step tasks with file access, use Claude Code
   claude
 
+  # Optional: Install SpecStory to auto-save conversations (see docs/SpecStory-Installation.md)
+  specstory run claude
+
   # For simple tasks, questions and text processing, use llm CLI tool
   llm "explain this error" < error.log
 
@@ -71,7 +74,8 @@ This devcontainer comes pre-configured with:
 - Anthropic's **[Claude Code](https://docs.claude.com/en/docs/claude-code)** for interactive AI assistance with file access and command execution
   - Default: Claude Code (requires Anthropic API key)
   - Plugins: File System, Shell Command Execution
-- **[llm](https://llm.datasette.io/)** developed by Simon Willison, A CLI tool for interacting with OpenAI, Anthropic’s Claude, Google’s Gemini, Meta’s Llama and dozens of other Large Language Models
+  - Optional: Use with **[SpecStory](https://specstory.com/)** to auto-save conversations as markdown ([installation guide](docs/SpecStory-Installation.md))
+- **[llm](https://llm.datasette.io/)** developed by Simon Willison, A CLI tool for interacting with OpenAI, Anthropic's Claude, Google's Gemini, Meta's Llama and dozens of other Large Language Models
   - Default: GitHub GPT-4o (free, no API key required)
   - Plugins: Anthropic Claude, Google Gemini, GitHub Models
 
@@ -179,7 +183,30 @@ claude "help me refactor this code"
 claude --help
 ```
 
+**Using SpecStory with Claude Code:**
+
+SpecStory automatically saves your Claude Code conversations as clean, searchable markdown. This preserves the reasoning, decisions, and design tradeoffs behind your code as versioned, git-friendly documentation.
+
+```bash
+# Install SpecStory (optional, see installation guide)
+# Follow instructions at: docs/SpecStory-Installation.md
+
+# Run Claude Code with SpecStory
+specstory run claude
+
+# Your conversations are automatically saved to .specstory/
+# as markdown files with timestamps and full context
+```
+
+**Why use SpecStory?**
+- **Preserve intent** - Capture the "why" behind code decisions
+- **Reusable context** - Refer back to past conversations and reasoning
+- **Team collaboration** - Share decision logs with teammates
+- **Git-friendly** - Version control your design discussions
+- **Local-first** - All data stays on your machine by default
+
 For detailed documentation: https://docs.claude.com/en/docs/claude-code/overview
+SpecStory documentation pages: https://docs.specstory.com/overview
 
 ### llm CLI
 
