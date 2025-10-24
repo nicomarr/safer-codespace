@@ -169,5 +169,7 @@ CLAUDE.local.md
 tmp/
 temp/
 
-# SpecStory files
-.specstory/
+# Project-specific
+context/untrusted/*
+.specstory/*
+CLAUDE.local.md

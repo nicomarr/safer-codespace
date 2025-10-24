@@ -9,9 +9,18 @@ help:
 install:
     uv pip install -r requirements.txt
 
-# Run Python tests
+# Run all tests
 test:
-    python -m pytest tests/
+    @just test-connectivity
+    @just test-url-to-markdown
+
+# Test network connectivity
+test-connectivity:
+    bash tests/network/test_connectivity.sh
+
+# Test url_to_markdown tool
+test-url-to-markdown:
+    uv run tests/network/test_url_to_markdown.py
 
 # Start a local development server on specified port (default: 8000)
 serve port="8000":
