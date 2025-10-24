@@ -99,7 +99,8 @@ This devcontainer comes pre-configured with:
 - **GitHub Actions** - Automated testing and validation
   - **Devcontainer Build** (`.github/workflows/devcontainer-build.yml`) - Validates the devcontainer builds successfully
   - **Network Connectivity** (`.github/workflows/network-connectivity-test.yml`) - Verifies required endpoints are reachable and firewall configuration works as expected
-  - Both workflows run on push/PR to `main` and can be manually triggered from the Actions tab
+  - **`llm` CLI Tool Test** (`.github/workflows/llm-tool-test.yml`) - Tests that the `llm` CLI tool is properly installed and functional
+  - All workflows run on push/PR to `main` and can be manually triggered from the Actions tab
 
 ---
 

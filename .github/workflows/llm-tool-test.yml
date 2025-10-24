@@ -1,0 +1,36 @@
+name: LLM Tool Test
+
+# Validate that the llm CLI tool is properly installed and functional
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+  workflow_dispatch:
+    # Manual trigger for on-demand testing
+
+jobs:
+  llm-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build devcontainer image
+        uses: devcontainers/ci@v0.2
+        with:
+          imageName: 'safer-codespaces-devcontainer'
+          push: never
+
+      - name: Test llm tool installation
+        uses: devcontainers/ci@v0.2
+        with:
+          imageName: 'safer-codespaces-devcontainer'
+          push: never
+          runCmd: llm --version
+
+      - name: Test llm with sample code analysis
+        uses: devcontainers/ci@v0.2
+        with:
+          imageName: 'safer-codespaces-devcontainer'
+          push: never
+          runCmd: echo "print('hello world')" | llm "what does this do?"
