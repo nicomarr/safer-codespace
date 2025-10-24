@@ -98,7 +98,8 @@ This devcontainer comes pre-configured with:
 ### Continuous Integration
 - **GitHub Actions** - Automated testing and validation
   - **Devcontainer Build** (`.github/workflows/devcontainer-build.yml`) - Validates the devcontainer builds successfully
-  - **Network Connectivity** (`.github/workflows/network-connectivity-test.yml`) - Verifies required endpoints are reachable and firewall configuration works as expected
+  - **Network Connectivity** (`.github/workflows/network-connectivity-test.yml`) - Verifies required endpoints are reachable
+  - **Firewall Validation** (`.github/workflows/firewall-validation.yml`) - Ensures firewall blocks unauthorized domains while allowing required endpoints
   - **`llm` CLI Tool Test** (`.github/workflows/llm-tool-test.yml`) - Verifies the `llm` CLI tool is installed and available models are configured
   - All workflows run on push/PR to `main` and can be manually triggered from the Actions tab
 

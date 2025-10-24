@@ -1,0 +1,86 @@
+name: Firewall Validation
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  validate-firewall:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Build and run devcontainer with firewall
+        uses: devcontainers/ci@v0.2
+        with:
+          runCmd: |
+            echo "=== Firewall Validation Test ==="
+            echo "Verifying network firewall blocks unauthorized outbound connections..."
+            echo
+            
+            # Test that allowed domains ARE reachable
+            echo "Testing allowed domains (should be REACHABLE):"
+            allowed_domains=(
+              "GitHub API:https://api.github.com"
+              "PyPI:https://pypi.org"
+              "npm:https://registry.npmjs.org"
+            )
+            
+            allowed_failed=0
+            for endpoint in "${allowed_domains[@]}"; do
+              name="${endpoint%%:*}"
+              url="${endpoint#*:}"
+              printf "  %-20s " "$name:"
+              if curl -s --connect-timeout 5 --max-time 10 "$url" > /dev/null 2>&1; then
+                echo "✓ REACHABLE (expected)"
+              else
+                echo "✗ BLOCKED (UNEXPECTED - firewall too restrictive!)"
+                allowed_failed=$((allowed_failed + 1))
+              fi
+            done
+            
+            echo
+            echo "Testing blocked domains (should be BLOCKED):"
+            
+            # Test that non-allowed domains are BLOCKED
+            blocked_domains=(
+              "example.com:http://www.example.com"
+              "cloudflare.com:https://www.cloudflare.com"
+              "amazon.com:https://www.amazon.com"
+            )
+            
+            blocked_failed=0
+            for endpoint in "${blocked_domains[@]}"; do
+              name="${endpoint%%:*}"
+              url="${endpoint#*:}"
+              printf "  %-20s " "$name:"
+              if curl -s --connect-timeout 5 --max-time 10 "$url" > /dev/null 2>&1; then
+                echo "✗ REACHABLE (FAIL - firewall not working!)"
+                blocked_failed=$((blocked_failed + 1))
+              else
+                echo "✓ BLOCKED (expected)"
+              fi
+            done
+            
+            echo
+            echo "=== Test Summary ==="
+            echo "Allowed domains that failed: $allowed_failed"
+            echo "Blocked domains that failed: $blocked_failed"
+            
+            # Exit with error if any tests failed
+            total_failed=$((allowed_failed + blocked_failed))
+            if [ $total_failed -gt 0 ]; then
+              echo
+              echo "FAIL: Firewall validation failed ($total_failed issues detected)"
+              exit 1
+            else
+              echo
+              echo "PASS: Firewall is working correctly"
+              exit 0
+            fi
