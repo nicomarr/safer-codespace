@@ -1,0 +1,22 @@
+name: Network Connectivity Test
+
+# Validate network connectivity for devcontainer dependencies and firewall configuration
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+  workflow_dispatch:
+    # Manual trigger for on-demand testing
+
+jobs:
+  connectivity-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Make test script executable
+        run: chmod +x tests/network/test_connectivity.sh
+
+      - name: Run network connectivity tests
+        run: ./tests/network/test_connectivity.sh

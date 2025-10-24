@@ -94,10 +94,10 @@ This devcontainer comes pre-configured with:
 - **No GitHub CLI** - Intentionally excluded to prevent potential data exfiltration
 
 ### Continuous Integration
-- **GitHub Actions** - Automated devcontainer build validation on push/PR to `main`
-  - Ensures the devcontainer builds successfully
-  - Can be triggered manually from the Actions tab
-  - View workflow: `.github/workflows/devcontainer-build.yml`
+- **GitHub Actions** - Automated testing and validation
+  - **Devcontainer Build** (`.github/workflows/devcontainer-build.yml`) - Validates the devcontainer builds successfully
+  - **Network Connectivity** (`.github/workflows/network-connectivity-test.yml`) - Verifies required endpoints are reachable and firewall configuration works as expected
+  - Both workflows run on push/PR to `main` and can be manually triggered from the Actions tab
 
 ---
 
