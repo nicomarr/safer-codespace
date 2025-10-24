@@ -460,6 +460,21 @@ llm models list
 
 **Solution:** Rebuild the devcontainer. The `llm` tool is installed during container build.
 
+### Firewall Issues
+
+**Problem:** Cannot connect to a service or API not in the allow-list
+
+**Solution:** The network firewall blocks unauthorized outbound connections by default. To allow a new endpoint:
+
+1. Add the domain/IP to `.devcontainer/init-firewall.sh` in the allowed domains list
+2. Rebuild the devcontainer to apply changes
+
+**For temporary debugging:** Disable the firewall (resets on container restart):
+```bash
+sudo iptables -F
+sudo iptables -X
+```
+
 ### General Container Issues
 
 **Problem:** Tools not installed or outdated
