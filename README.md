@@ -3,6 +3,8 @@
 ![Experimental](https://img.shields.io/badge/status-experimental-orange)
 ![Security Focused](https://img.shields.io/badge/security-defense--in--depth-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
+![CI/CD](https://img.shields.io/badge/ci%2Fcd-configured-blue)
+
 
 An **experimental** development environment exploring defense-in-depth approaches to mitigate **prompt injection** risks when using AI coding assistants.
 
