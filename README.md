@@ -93,6 +93,12 @@ This devcontainer comes pre-configured with:
 - **Content segregation** - Separate `context/trusted/` and `context/untrusted/` directories
 - **No GitHub CLI** - Intentionally excluded to prevent potential data exfiltration
 
+### Continuous Integration
+- **GitHub Actions** - Automated devcontainer build validation on push/PR to `main`
+  - Ensures the devcontainer builds successfully
+  - Can be triggered manually from the Actions tab
+  - View workflow: `.github/workflows/devcontainer-build.yml`
+
 ---
 
 ## Choosing the Right Tool

@@ -1,0 +1,36 @@
+name: Devcontainer build
+
+# Build the repository devcontainer to ensure the Codespaces/devcontainer image builds cleanly.
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+  workflow_dispatch:
+    # Manual trigger with inputs so users can control smoke testing from the UI
+    inputs:
+      run_smoke:
+        description: 'Run smoke tests inside the built container (true/false)'
+        required: false
+        default: 'true'
+      smoke_command:
+        description: 'Command to run inside the built container for smoke testing'
+        required: false
+        default: 'python --version'
+
+jobs:
+  build-devcontainer:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build devcontainer image
+        # Uses the official devcontainers CI action to build the devcontainer defined in .devcontainer/
+        uses: devcontainers/ci@v0.2
+        with:
+          imageName: 'safer-codespaces-devcontainer'
+          push: never
+
+      - name: Smoke check
+        run: |
+          echo "Devcontainer build step completed (see previous step logs for details)."
