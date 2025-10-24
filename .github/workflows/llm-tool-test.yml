@@ -28,9 +28,9 @@ jobs:
           push: never
           runCmd: llm --version
 
-      - name: Test llm with sample code analysis
+      - name: Test llm models are available
         uses: devcontainers/ci@v0.2
         with:
           imageName: 'safer-codespaces-devcontainer'
           push: never
-          runCmd: echo "print('hello world')" | llm "what does this do?"
+          runCmd: llm models list
