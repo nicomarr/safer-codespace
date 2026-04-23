@@ -23,5 +23,6 @@
     "node": "npm install -g @anthropic-ai/claude-code rust-just",
     "go": "go install github.com/charmbracelet/glow/v2@latest",
     "firewall": "sudo ${containerWorkspaceFolder}/.devcontainer/init-firewall.sh || true"
-  }
+  },
+  "remoteUser": "vscode"
 }
