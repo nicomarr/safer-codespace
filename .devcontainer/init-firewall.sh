@@ -2,6 +2,12 @@
 set -euo pipefail  # Exit on error, undefined vars, and pipeline failures
 IFS=$'\n\t'       # Stricter word splitting
 
+# Skip firewall setup in CI environments
+if [[ "${CI:-false}" == "true" ]]; then
+    echo "Skipping firewall setup in CI environment"
+    exit 0
+fi
+
 # 1. Extract Docker DNS info BEFORE any flushing
 DOCKER_DNS_RULES=$(iptables-save -t nat | grep "127\.0\.0\.11" || true)
 
