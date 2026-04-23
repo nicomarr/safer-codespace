@@ -12,6 +12,7 @@ on:
 jobs:
   validate-firewall:
     runs-on: ubuntu-latest
+    if: ${{ github.event_name == 'workflow_dispatch' }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v2
