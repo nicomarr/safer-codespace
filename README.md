@@ -1,7 +1,6 @@
 # Safer Codespace
 
 ![Experimental](https://img.shields.io/badge/status-experimental-orange)
-![Security Focused](https://img.shields.io/badge/security-defense--in--depth-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
 ![CI/CD](https://img.shields.io/badge/ci%2Fcd-configured-blue)
 
@@ -36,6 +35,8 @@ Get up and running in 3 steps:
   ```bash
   # For complex, multi-step tasks with file access, use Claude Code
   claude
+  # Or use Pi as alternative to Claude Code
+  pi
 
   # Optional: Install SpecStory to auto-save conversations (see docs/SpecStory-Installation.md)
   specstory run claude
@@ -77,6 +78,7 @@ This devcontainer comes pre-configured with:
   - Default: Claude Code (requires Anthropic API key)
   - Plugins: File System, Shell Command Execution
   - Optional: Use with **[SpecStory](https://specstory.com/)** to auto-save conversations as markdown ([installation guide](docs/SpecStory-Installation.md))
+- **[Pi](https://pi.dev)** by Mario Zechner & contributors (Earendil Works) — a terminal coding harness with file access and bash execution, supporting multiple LLM providers (Claude, GPT, GitHub Copilot). In Codespaces, Pi works out of the box with GitHub Copilot — no extra authentication needed.
 - **[llm](https://llm.datasette.io/)** developed by Simon Willison, A CLI tool for interacting with OpenAI, Anthropic's Claude, Google's Gemini, Meta's Llama and dozens of other Large Language Models
   - Default: GitHub GPT-4o (free, no API key required)
   - Plugins: Anthropic Claude, Google Gemini, GitHub Models
@@ -109,22 +111,25 @@ This devcontainer comes pre-configured with:
 
 **Not every task needs an AI agent.** Choose the right tool for your needs:
 
-### When to use Claude Code
+### When to use Claude Code or Pi
 
 Best for **focused development tasks** where you need file access and iterative assistance:
 
 - **Boilerplate in unfamiliar languages** - You know the goal but not the specific syntax or patterns
-- **Test-driven development** - Draft test cases and develop iteratively with Claude's guidance
-- **Codebase exploration** - Understand existing code through Claude's search and analysis capabilities
+- **Test-driven development** - Draft test cases and develop iteratively with the agent's guidance
+- **Codebase exploration** - Understand existing code through the agent's search and analysis capabilities
 - **Simple features from scratch** - Build UIs or functionality with minimal dependencies
 - **Targeted refactoring** - Modify existing code patterns across related files
 
 ```bash
-# Start interactive session
+# Start Claude Code interactive session
 claude
 
 # Start with a specific task
 claude "Give me an overview of this codebase"
+
+# Start Pi
+pi
 ```
 
 ### When to use the `llm` CLI tool
@@ -327,7 +332,7 @@ When AI assistants have all three capabilities, attackers can inject malicious i
 
 **Attack scenario:** Malicious instructions in documentation → AI reads your secrets → AI sends them to attacker's server.
 
-### Our Defense-in-Depth Approach
+### Approach
 
 This template uses **multiple redundant layers** rather than relying on any single defense:
 
@@ -385,7 +390,7 @@ This ensures agents never directly process untrusted content.
 #### 4. Tool Selection
 
 Choose less powerful tools when possible:
-- `llm` (no file access) over Claude Code for simple tasks
+- `llm` (no file access) over Claude Code or Pi for simple tasks
 - Manual commands over AI for routine operations
 
 ### Why No GitHub CLI?
@@ -442,6 +447,16 @@ sudo /workspaces/claude-codespace/.devcontainer/init-firewall.sh
 **Problem:** "Claude Code not found"
 
 **Solution:** Node.js 25+ is not supported. This template uses Node.js 24.x. Rebuild the container.
+
+### Pi Issues
+
+**Problem:** Pi not found
+
+**Solution:** Rebuild the devcontainer. Pi is installed during container build.
+
+**Problem:** GitHub Copilot not working
+
+**Solution:** Ensure `api.githubcopilot.com` is in the firewall allow-list and rebuild the container.
 
 ### llm Issues
 
