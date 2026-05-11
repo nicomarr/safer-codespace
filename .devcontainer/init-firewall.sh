@@ -69,29 +69,33 @@ while read -r cidr; do
     ipset add allowed-domains "$cidr" -exist
 done < <(echo "$gh_ranges" | jq -r '(.web + .api + .git)[]' | aggregate -q)
 
-# Resolve and add other allowed domains
-for domain in \
-    "registry.npmjs.org" \
-    "api.anthropic.com" \
-    "sentry.io" \
-    "statsig.com" \
-    "marketplace.visualstudio.com" \
-    "vscode.blob.core.windows.net" \
-    "update.code.visualstudio.com" \
-    "pypi.org" \
-    "files.pythonhosted.org" \
-    "models.inference.ai.azure.com" \
-    "generativelanguage.googleapis.com" \
-    "proxy.golang.org" \
-    "sum.golang.org" \
-    "api.githubcopilot.com"; do
+# Track optional domains that fail DNS resolution so we can surface a summary
+# at the end of the log. GitHub IPs (fetched above) and api.anthropic.com are
+# the only critical resolutions; everything else can fail without bricking
+# the firewall.
+failed_domains=()
+
+# Resolve a domain and add its A records to the allowed-domains ipset.
+# Args:
+#   $1 - domain name
+#   $2 - mode: "critical" (exit 1 on failure) or "optional" (warn and continue)
+resolve_into_ipset() {
+    local domain="$1"
+    local mode="$2"
+    local ips
+
     echo "Resolving $domain..."
     ips=$(dig +noall +answer A "$domain" | awk '$4 == "A" {print $5}')
     if [ -z "$ips" ]; then
-        echo "ERROR: Failed to resolve $domain"
-        exit 1
+        if [ "$mode" = "critical" ]; then
+            echo "ERROR: Failed to resolve critical domain $domain"
+            exit 1
+        fi
+        echo "WARNING: Failed to resolve $domain - skipping (firewall remains active)"
+        failed_domains+=("$domain")
+        return 0
     fi
-    
+
     while read -r ip; do
         if [[ ! "$ip" =~ ^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}$ ]]; then
             echo "ERROR: Invalid IP from DNS for $domain: $ip"
@@ -100,7 +104,47 @@ for domain in \
         echo "Adding $ip for $domain"
         ipset add allowed-domains "$ip" -exist
     done < <(echo "$ips")
+}
+
+# Critical domains: failure aborts firewall setup.
+CRITICAL_DOMAINS=(
+    "api.anthropic.com"
+)
+
+# Optional domains: failure is logged and skipped.
+OPTIONAL_DOMAINS=(
+    "registry.npmjs.org"
+    "sentry.io"
+    "statsig.com"
+    "marketplace.visualstudio.com"
+    "vscode.blob.core.windows.net"
+    "update.code.visualstudio.com"
+    "pypi.org"
+    "files.pythonhosted.org"
+    "models.inference.ai.azure.com"
+    "generativelanguage.googleapis.com"
+    "proxy.golang.org"
+    "sum.golang.org"
+    "api.githubcopilot.com"
+)
+
+for domain in "${CRITICAL_DOMAINS[@]}"; do
+    resolve_into_ipset "$domain" "critical"
 done
+for domain in "${OPTIONAL_DOMAINS[@]}"; do
+    resolve_into_ipset "$domain" "optional"
+done
+
+# Surface optional-domain DNS failures at end of log for visibility
+if [ ${#failed_domains[@]} -gt 0 ]; then
+    echo
+    echo "WARNING: ${#failed_domains[@]} optional domain(s) failed DNS resolution and were skipped:"
+    for failed in "${failed_domains[@]}"; do
+        echo "  - $failed"
+    done
+    echo "The firewall is still active; traffic to these endpoints will be blocked."
+    echo
+fi
 
 # Get host IP from default route
 HOST_IP=$(ip route | grep default | cut -d" " -f3)
