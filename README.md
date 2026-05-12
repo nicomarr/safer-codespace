@@ -93,7 +93,7 @@ This devcontainer comes pre-configured with:
 - **[just](https://just.systems/)** - Simple command runner (like make, but better)
 
 ### Security Features
-- **Network firewall** - Blocks unauthorized outbound connections (auto-configured)
+- **Network firewall** - Blocks unauthorized outbound connections (auto-configured). The allowlist covers SSH as well as HTTP/S, so `ssh` to non-allowlisted hosts is blocked. GitHub-over-SSH works out of the box because GitHub's SSH endpoints are included via the `api.github.com/meta` fetch.
 - **Content segregation** - Separate `context/trusted/` and `context/untrusted/` directories
 - **No GitHub CLI** - Intentionally excluded to prevent potential data exfiltration
 
@@ -435,11 +435,21 @@ This repository includes `CLAUDE.md` with comprehensive guidelines on:
 
 ### Firewall Issues
 
-**Problem:** Can't connect to a required service
+**Problem:** Can't connect to a required service or an API not in the allow-list
 
-**Solution:** Add the domain to `.devcontainer/init-firewall.sh` and rebuild:
+**Solution:** Add the domain/IP to `.devcontainer/init-firewall.sh` in the allowed domains list, then rebuild the container to apply the change. To re-run the script in an already-running container without rebuilding:
 ```bash
-sudo /workspaces/claude-codespace/.devcontainer/init-firewall.sh
+sudo /workspaces/safer-codespace/.devcontainer/init-firewall.sh
+```
+
+**Problem:** `ssh` to a non-GitHub host (own server, GitLab, Bitbucket) hangs or times out
+
+**Solution:** Outbound SSH is restricted to hosts in the firewall allowlist, not blanket-allowed. GitHub is included automatically via the `api.github.com/meta` fetch; other SSH hosts must be added explicitly. Resolve the host's IP and add it to `.devcontainer/init-firewall.sh` alongside the other optional domains, then rebuild the container. Unlike GitHub, GitLab and Bitbucket do not publish a stable meta endpoint, so their IP ranges have to be maintained manually.
+
+**For temporary debugging:** Disable the firewall (resets on container restart):
+```bash
+sudo iptables -F
+sudo iptables -X
 ```
 
 ### Claude Code Issues
@@ -475,21 +485,6 @@ llm models list
 **Problem:** `llm` command not found
 
 **Solution:** Rebuild the devcontainer. The `llm` tool is installed during container build.
-
-### Firewall Issues
-
-**Problem:** Cannot connect to a service or API not in the allow-list
-
-**Solution:** The network firewall blocks unauthorized outbound connections by default. To allow a new endpoint:
-
-1. Add the domain/IP to `.devcontainer/init-firewall.sh` in the allowed domains list
-2. Rebuild the devcontainer to apply changes
-
-**For temporary debugging:** Disable the firewall (resets on container restart):
-```bash
-sudo iptables -F
-sudo iptables -X
-```
 
 ### General Container Issues
 
