@@ -11,6 +11,13 @@ fi
 # 1. Extract Docker DNS info BEFORE any flushing
 DOCKER_DNS_RULES=$(iptables-save -t nat | grep "127\.0\.0\.11" || true)
 
+# Reset policies to ACCEPT before flushing — otherwise a re-run strips the
+# ACCEPT rules while DROP remains, bricking the container on partial failure.
+# See `git log` for full rationale.
+iptables -P INPUT ACCEPT
+iptables -P FORWARD ACCEPT
+iptables -P OUTPUT ACCEPT
+
 # Flush existing rules and delete existing ipsets
 iptables -F
 iptables -X
