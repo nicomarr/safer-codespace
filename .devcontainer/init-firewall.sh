@@ -35,10 +35,11 @@ fi
 iptables -A OUTPUT -p udp --dport 53 -j ACCEPT
 # Allow inbound DNS responses
 iptables -A INPUT -p udp --sport 53 -j ACCEPT
-# Allow outbound SSH
-iptables -A OUTPUT -p tcp --dport 22 -j ACCEPT
-# Allow inbound SSH responses
-iptables -A INPUT -p tcp --sport 22 -m state --state ESTABLISHED -j ACCEPT
+# Note: upstream adds blanket outbound SSH rules here (TCP/22 OUTPUT, plus a
+# return-traffic INPUT). Omitted in this fork — TCP/22 to any destination is
+# an allowlist bypass since SSH can tunnel arbitrary traffic. SSH to GitHub
+# still works via the allowed-domains ipset; other hosts require explicit
+# allowlisting. See `git log` for the full rationale.
 # Allow localhost
 iptables -A INPUT -i lo -j ACCEPT
 iptables -A OUTPUT -o lo -j ACCEPT
