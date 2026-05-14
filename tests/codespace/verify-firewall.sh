@@ -74,7 +74,7 @@ echo "=== Positive controls (allowlisted destinations should succeed) ==="
 run_check "HTTPS to api.github.com" "pass" \
     "curl --connect-timeout 5 -fsS https://api.github.com/zen"
 run_check "TCP/22 to github.com (SSH endpoint)" "pass" \
-    "timeout 5 bash -c '</dev/tcp/github.com/22>'"
+    "timeout 5 bash -c '</dev/tcp/github.com/22'"
 run_check "DNS resolution of github.com" "pass" \
     "getent hosts github.com"
 
@@ -86,9 +86,9 @@ echo "=== Negative controls (non-allowlisted destinations should be blocked) ===
 run_check "HTTPS to example.com" "fail" \
     "curl --connect-timeout 5 -fsS https://example.com"
 run_check "TCP/22 to 1.1.1.1 (Cloudflare, non-GitHub)" "fail" \
-    "timeout 5 bash -c '</dev/tcp/1.1.1.1/22>'"
+    "timeout 5 bash -c '</dev/tcp/1.1.1.1/22'"
 run_check "TCP/22 to gitlab.com (non-GitHub host)" "fail" \
-    "timeout 5 bash -c '</dev/tcp/gitlab.com/22>'"
+    "timeout 5 bash -c '</dev/tcp/gitlab.com/22'"
 
 echo
 echo "=== Summary ==="
