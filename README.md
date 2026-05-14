@@ -348,6 +348,12 @@ This template uses **multiple redundant layers** rather than relying on any sing
 tests/network/test_connectivity.sh
 ```
 
+**Verify firewall behavior in a Codespace (after firewall changes):**
+```bash
+bash tests/codespace/verify-firewall.sh
+```
+Runs positive controls (HTTPS, TCP/22, DNS to allowlisted destinations should succeed) and negative controls (the same to non-allowlisted destinations should be blocked). Exits 0 only if all checks pass. CI cannot exercise this — `init-firewall.sh` skips itself when `CI=true` because `devcontainers/ci@v0.2`'s nested-docker context does not support iptables properly. After modifying `init-firewall.sh`, open a fresh Codespace on the PR branch, run the script, and paste the output into the PR description as evidence.
+
 **Add new domains:**
 Edit `.devcontainer/init-firewall.sh` and add to the domain list around line 67:
 ```bash
