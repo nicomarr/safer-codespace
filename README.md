@@ -39,7 +39,7 @@ Get up and running in 3 steps:
   pi
 
   # Optional: Install SpecStory to auto-save conversations (see docs/SpecStory-Installation.md)
-  specstory run claude
+  specstory run --no-usage-analytics claude
 
   # For simple tasks, questions and text processing, use llm CLI tool
   llm "explain this error" < error.log
@@ -206,12 +206,14 @@ SpecStory automatically saves your Claude Code conversations as clean, searchabl
 # Install SpecStory (optional, see installation guide)
 # Follow instructions at: docs/SpecStory-Installation.md
 
-# Run Claude Code with SpecStory
-specstory run claude
+# Run Claude Code with SpecStory (telemetry disabled — see note below)
+specstory run --no-usage-analytics claude
 
 # Your conversations are automatically saved to .specstory/
 # as markdown files with timestamps and full context
 ```
+
+**Note on `--no-usage-analytics`:** by default, `specstory run` sends usage telemetry to PostHog (`app.posthog.com`, served from Cloudflare). The firewall blocks those connections, which surfaces as repeated `dial tcp ...: connect: no route to host` errors in the terminal while Claude Code still runs and SpecStory still captures the conversation locally. The flag disables the telemetry calls so the log stays clean. Confirmed with the SpecStory team.
 
 **Why use SpecStory?**
 - **Preserve intent** - Capture the "why" behind code decisions
