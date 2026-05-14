@@ -17,9 +17,8 @@ An **experimental** development environment exploring defense-in-depth approache
 - [Prerequisites](#prerequisites)
 - [What's Included](#whats-included)
 - [Choosing the Right Tool](#choosing-the-right-tool)
-- [Tool Usage Guides](#tool-usage-guides)
+- [Usage Guides](#usage-guides)
 - [Understanding the Security Model](#understanding-the-security-model)
-- [Additional Resources](#additional-resources)
 - [Troubleshooting](#troubleshooting)
 - [Contributing](#contributing)
 
@@ -109,75 +108,12 @@ This devcontainer comes pre-configured with:
 
 ## Choosing the Right Tool
 
-**Not every task needs an AI agent.** Choose the right tool for your needs:
+Not every task needs an AI agent. The tools in this template trade capability against risk:
 
-### When to use Claude Code or Pi
-
-Best for **focused development tasks** where you need file access and iterative assistance:
-
-- **Boilerplate in unfamiliar languages** - You know the goal but not the specific syntax or patterns
-- **Test-driven development** - Draft test cases and develop iteratively with the agent's guidance
-- **Codebase exploration** - Understand existing code through the agent's search and analysis capabilities
-- **Simple features from scratch** - Build UIs or functionality with minimal dependencies
-- **Targeted refactoring** - Modify existing code patterns across related files
-
-```bash
-# Start Claude Code interactive session
-claude
-
-# Start with a specific task
-claude "Give me an overview of this codebase"
-
-# Start Pi
-pi
-```
-
-### When to use the `llm` CLI tool
-
-Perfect for **text processing tasks** that don't need file access or command execution. Particularly useful because you can **pipe output from other CLI tools** directly to it:
-
-- **Explain errors or code snippets** - Paste error messages or functions for quick analysis
-- **Generate commit messages** - Create conventional commits from staged changes
-- **Quick code reviews** - Analyze diffs for potential issues or improvements
-- **Explore Git history** - Analyze commit logs, changes, and project evolution patterns
-- **Transform data formats** - Convert between JSON, CSV, markdown, or other text formats
-- **Programming Q&A** - Get answers about syntax, concepts, or best practices
-
-```bash
-# Generate commit message from staged changes
-git diff --staged | llm -s "write a conventional commit message for these changes"
-
-# Quick code review
-git diff main | llm "review these changes for potential issues"
-
-# Ask a question
-cat script.py | llm "explain what this code does"
-```
-
-**Security benefit:** `llm` cannot access your files or run commands out-of-the-box. Even if compromised by prompt injection, damage is limited to the text you explicitly provide.
-
-### When to use VS Code with LLM integration
-
-Perfect for **controlled, inline code editing and completion** when you want to restrict changes to specific files or sections:
-
-- **Targeted code modifications** - Edit specific functions or code blocks without affecting other files
-- **Inline documentation** - Generate comments, docstrings, type hints, or explanations within existing code
-- **Code completion and suggestions** - Get LLM assistance while maintaining full control over what you write
-- **Refactoring specific sections** - Modify code patterns within a single file or selected region
-- **Language-specific optimizations** - Improve syntax, or performance in focused code sections
-
-This approach gives you the benefit of LLM assistance while ensuring changes remain scoped to exactly what you want to modify.
-
-### When to skip AI altogether
-
-For **simple, routine tasks**, such as:
-
-- Basic git operations
-- Installing packages
-- Running tests
-- Simple config changes
-
-**Why?** Faster, safer, and you maintain direct control.
+- **Claude Code / Pi** — file access plus shell execution. Best for multi-step development: codebase exploration, test-driven development, refactoring across files. Also the most powerful target for prompt injection — give them the deepest care about what they read.
+- **`llm`** — text in, text out. No file access, no command execution. Use for piping CLI output (e.g. `git diff --staged | llm "write a commit message"`), explaining errors, quick code review. Damage from a compromised prompt is limited to text you explicitly provide.
+- **VS Code with LLM integration** — inline edits scoped to the file you're looking at. You remain in control of what changes.
+- **No AI at all** — for routine git operations, package installs, running tests, simple config changes. Faster, safer, no surprises.
 
 ---
 
@@ -252,57 +188,7 @@ llm models default claude-3-5-sonnet-latest
 llm --help
 ```
 
-**Key commands:**
-- `llm prompt` - Execute a one-off prompt (default)
-- `llm chat` - Start an interactive conversation
-- `llm models` - Manage available models
-- `llm keys` - Configure API keys for different providers
-- `llm logs` - View prompt/response history
-- `llm templates` - Manage reusable prompt templates
-
 For detailed documentation: https://llm.datasette.io/
-
-<details>
-<summary><strong>Python Development</strong></summary>
-
-```bash
-# Install packages (fast method)
-uv pip install package-name
-
-# Traditional pip
-pip install package-name
-
-# Run scripts
-python script.py
-```
-</details>
-
-<details>
-<summary><strong>Node.js Development</strong></summary>
-
-```bash
-# Install packages
-npm install package-name
-
-# Run package.json scripts
-npm run script-name
-```
-</details>
-
-<details>
-<summary><strong>Go Development</strong></summary>
-
-```bash
-# Initialize module
-go mod init module-name
-
-# Install packages
-go get package-name
-
-# Run programs
-go run main.go
-```
-</details>
 
 ### Other Tools
 
@@ -411,31 +297,9 @@ The `gh` CLI is **intentionally excluded** as part of our security-first approac
 
 ### Learn More
 
-For detailed information about prompt injection:
-- Read the curated content in `context/trusted/simon-willison-weblog-content/`
-- Original 2022 post coining "prompt injection"
-- 2025 "lethal trifecta" framework
-- Real-world examples of attacks on major AI systems
-
----
-
-## Additional Resources
-
-### Development Philosophy
-
-This repository includes `CLAUDE.md` with comprehensive guidelines on:
-- Literate Programming principles
-- MVP-first methodology (6-8 step rule)
-- Test-Driven Development practices
-- Python coding standards
-- Git workflow with Conventional Commits
-
-**View it:** `glow CLAUDE.md`
-
-### Security Resources
-
-- **Prompt Injection Deep Dive:** `context/trusted/simon-willison-weblog-content/`
-- **GitHub Actions Risks:** `context/trusted/github-blog-posts/github-actions-workflow-injection-risks.md`
+Curated reading in `context/trusted/`:
+- `simon-willison-weblog-content/` — original 2022 post coining "prompt injection", the 2025 "lethal trifecta" framing, real-world examples of attacks on major AI systems.
+- `github-blog-posts/github-actions-workflow-injection-risks.md` — GitHub Actions–specific injection vectors.
 
 ---
 
@@ -506,27 +370,14 @@ llm models list
 
 ## Contributing
 
-This is an **experimental** repository exploring prompt injection mitigations. We welcome:
-
-- **Bug reports** - File an issue describing the problem
-- **Security feedback** - Share your perspective on the defense-in-depth approach
-- **Tool suggestions** - Propose additions that align with our security model
-- **Documentation improvements** - Help make this more accessible
-
-**Note:** We do not claim to have "solved" prompt injection. This template explores practical mitigation strategies using defense-in-depth principles.
-
-### Providing Feedback
-
-1. **GitHub Issues** - For bugs, feature requests, or questions
-2. **Pull Requests** - For documentation or tooling improvements
-3. **Discussions** - For broader conversations about security approaches
+This is an experimental repository exploring prompt-injection mitigations — not a claim that prompt injection is solved. Bug reports, security critiques, and suggestions that fit the defense-in-depth model are welcome via GitHub Issues or PRs.
 
 ---
 
 ## License
 
-MIT License - See LICENSE file for details
+MIT License — see [LICENSE](LICENSE).
 
 ---
 
-**Built by the security-conscious developer community. Use at your own risk and always review external content before exposing it to AI agents.**
+Use at your own risk. Always review external content before exposing it to AI agents.
