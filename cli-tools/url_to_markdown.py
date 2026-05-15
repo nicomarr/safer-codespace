@@ -231,8 +231,10 @@ See: https://simonwillison.net/2025/Jun/16/the-lethal-trifecta/ for more details
 
         filename = f"{timestamp}_{url_slug}.md"
 
-        # Save to untrusted directory
-        output_dir = Path("/workspaces/claude-codespace/context/untrusted")
+        # Save to <repo>/context/untrusted/ regardless of where the repo is
+        # cloned or what it is named. Path resolves from this script's own
+        # location: cli-tools/url_to_markdown.py -> ../context/untrusted/.
+        output_dir = Path(__file__).resolve().parent.parent / "context" / "untrusted"
         output_dir.mkdir(parents=True, exist_ok=True)
 
         file_path = output_dir / filename
