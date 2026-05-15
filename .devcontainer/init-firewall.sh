@@ -37,13 +37,45 @@ else
     echo "No Docker DNS rules to restore"
 fi
 
-# First allow DNS and localhost before any restrictions
-# Allow outbound DNS
-iptables -A OUTPUT -p udp --dport 53 -j ACCEPT
-# Allow inbound DNS responses
-iptables -A INPUT -p udp --sport 53 -j ACCEPT
-# Note: upstream adds blanket outbound SSH rules here (TCP/22 OUTPUT, plus a
-# return-traffic INPUT). Omitted in this fork — TCP/22 to any destination is
+# Restrict DNS egress to the resolvers actually configured for this container.
+# Closes the direct DNS-tunnel exfiltration channel where a compromised agent
+# encodes data in subdomain labels of queries directed at an attacker-controlled
+# nameserver. Does NOT prevent exfiltration through the legitimate resolver
+# chain (the upstream resolver still recurses to whatever NS the attacker's
+# domain points at) — that would require application-layer DNS filtering,
+# which is out of scope for an iptables-based control.
+#
+# Reads /etc/resolv.conf plus /run/systemd/resolve/resolv.conf (the latter
+# only if present). Both are needed in environments using systemd-resolved
+# as a stub: /etc/resolv.conf points at 127.0.0.53 on loopback (already
+# covered by the lo rule below, but explicit allow doesn't hurt), and
+# /run/systemd/resolve/resolv.conf lists the *upstream* resolvers that
+# systemd-resolved forwards to — those queries leave via eth0 and hit
+# OUTPUT, so they need their own allow rule.
+#
+# TCP/53 is included because DNS responses larger than 512 bytes (DNSSEC,
+# big answer sets) fall back to TCP.
+RESOLVER_FILES=("/etc/resolv.conf")
+[ -r /run/systemd/resolve/resolv.conf ] && RESOLVER_FILES+=("/run/systemd/resolve/resolv.conf")
+resolvers=$(cat "${RESOLVER_FILES[@]}" 2>/dev/null | awk '/^nameserver/ {print $2}' | sort -u)
+if [ -z "$resolvers" ]; then
+    echo "ERROR: no nameservers found in ${RESOLVER_FILES[*]} — refusing to apply firewall with no DNS path"
+    exit 1
+fi
+echo "Allowing DNS to configured resolvers:"
+for resolver in $resolvers; do
+    echo "  - $resolver"
+    iptables -A OUTPUT -p udp --dport 53 -d "$resolver" -j ACCEPT
+    iptables -A OUTPUT -p tcp --dport 53 -d "$resolver" -j ACCEPT
+done
+
+# Note: upstream init-firewall.sh has `iptables -A INPUT -p udp --sport 53 -j
+# ACCEPT` here to accept DNS responses. Removed in this fork — source ports
+# are spoofable, and the ESTABLISHED,RELATED rule added later in this script
+# handles return traffic correctly via connection tracking.
+#
+# Note: upstream also adds blanket outbound SSH rules here (TCP/22 OUTPUT, plus
+# a return-traffic INPUT). Omitted in this fork — TCP/22 to any destination is
 # an allowlist bypass since SSH can tunnel arbitrary traffic. SSH to GitHub
 # still works via the allowed-domains ipset; other hosts require explicit
 # allowlisting. See `git log` for the full rationale.

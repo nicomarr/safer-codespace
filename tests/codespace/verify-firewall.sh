@@ -89,6 +89,13 @@ run_check "TCP/22 to 1.1.1.1 (Cloudflare, non-GitHub)" "fail" \
     "timeout 5 bash -c '</dev/tcp/1.1.1.1/22'"
 run_check "TCP/22 to gitlab.com (non-GitHub host)" "fail" \
     "timeout 5 bash -c '</dev/tcp/gitlab.com/22'"
+# DNS to a resolver not in /etc/resolv.conf or /run/systemd/resolve/resolv.conf
+# should be blocked. 9.9.9.9 (Quad9) is a real working resolver — so if dig
+# succeeds, it means the firewall didn't restrict destination. Picked Quad9
+# rather than 1.1.1.1 or 8.8.8.8 because Codespaces is least likely to have
+# Quad9 as its configured upstream. If your environment does, swap for another.
+run_check "DNS to 9.9.9.9 (Quad9, not in resolver config)" "fail" \
+    "timeout 3 dig +time=2 +tries=1 @9.9.9.9 example.com"
 
 echo
 echo "=== Summary ==="
