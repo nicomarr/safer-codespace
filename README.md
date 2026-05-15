@@ -92,7 +92,7 @@ This devcontainer comes pre-configured with:
 - **[just](https://just.systems/)** - Simple command runner (like make, but better)
 
 ### Security Features
-- **Network firewall** - Blocks unauthorized outbound connections (auto-configured). The allowlist covers SSH as well as HTTP/S, so `ssh` to non-allowlisted hosts is blocked. GitHub-over-SSH works out of the box because GitHub's SSH endpoints are included via the `api.github.com/meta` fetch.
+- **Network firewall** - Blocks unauthorized outbound connections (auto-configured). The allowlist covers SSH as well as HTTP/S, so `ssh` to non-allowlisted hosts is blocked. GitHub-over-SSH works out of the box because GitHub's SSH endpoints are included via the `api.github.com/meta` fetch. **DNS egress is restricted to the resolvers configured in `/etc/resolv.conf` and `/run/systemd/resolve/resolv.conf`**, closing direct DNS-tunnel exfiltration to attacker-controlled nameservers (DNS through the legitimate resolver chain is not closed — that would need application-layer DNS filtering, out of scope for an iptables-based control).
 - **Content segregation** - Separate `context/trusted/` and `context/untrusted/` directories
 - **No GitHub CLI** - Intentionally excluded to prevent potential data exfiltration
 
