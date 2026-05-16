@@ -31,8 +31,13 @@ import lxml.html
 from lxml.html.clean import Cleaner
 
 
-# SECURITY: Allow-list of trusted documentation domains
-# These are known documentation sites for software development
+# SECURITY: Allow-list of trusted documentation domains.
+# These are known documentation sites for software development.
+#
+# This list MUST stay in sync with the "Group 2: documentation sites" section
+# of OPTIONAL_DOMAINS in .devcontainer/init-firewall.sh — otherwise the
+# firewall blocks egress to most entries here and the tool silently fails
+# when run inside the devcontainer.
 ALLOWED_DOMAINS: set[str] = {
     # Python
     'docs.python.org',

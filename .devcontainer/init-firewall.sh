@@ -152,7 +152,18 @@ CRITICAL_DOMAINS=(
 )
 
 # Optional domains: failure is logged and skipped.
+#
+# Two groups:
+#   1. Tooling endpoints needed by the preinstalled tools (uv/pip, npm, go,
+#      llm, claude-code, copilot, VS Code).
+#   2. Documentation sites supported by cli-tools/url_to_markdown.py. These
+#      MUST stay in sync with that script's ALLOWED_DOMAINS set — otherwise
+#      the tool's whole workflow (fetch external docs into context/untrusted/
+#      for human review) silently fails when the firewall is active. Doc
+#      sites are low-exfil-risk targets (no general POST endpoint accepting
+#      arbitrary data), so this surface increase is bounded.
 OPTIONAL_DOMAINS=(
+    # --- Group 1: tooling endpoints ---
     "registry.npmjs.org"
     "sentry.io"
     "statsig.com"
@@ -166,6 +177,39 @@ OPTIONAL_DOMAINS=(
     "proxy.golang.org"
     "sum.golang.org"
     "api.githubcopilot.com"
+
+    # --- Group 2: documentation sites for url_to_markdown.py ---
+    # Python
+    "docs.python.org"
+    # JavaScript / Node (pypi.org already in Group 1)
+    "developer.mozilla.org"
+    "docs.npmjs.com"
+    "nodejs.org"
+    # Other languages
+    "docs.oracle.com"          # Java
+    "learn.microsoft.com"      # .NET, Azure docs, etc.
+    # Frameworks
+    "react.dev"
+    "vuejs.org"
+    "flask.palletsprojects.com"
+    "docs.djangoproject.com"
+    # Version control & DevOps (api.github.com already covered via IP ranges)
+    "docs.github.com"
+    "docs.gitlab.com"
+    # Databases
+    "postgresql.org"
+    "dev.mysql.com"
+    "mongodb.com"
+    # LLM / AI
+    "llm.datasette.io"
+    "datasette.io"
+    "platform.openai.com"
+    "docs.claude.com"
+    "ai.google.dev"
+    # Cloud provider docs
+    "cloud.google.com"
+    "aws.amazon.com"
+    "azure.microsoft.com"
 )
 
 for domain in "${CRITICAL_DOMAINS[@]}"; do
