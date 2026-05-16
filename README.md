@@ -252,7 +252,13 @@ for domain in \
     # ... rest of domains
 ```
 
-**Limitations:** Cannot prevent exfiltration to allowed domains (e.g., GitHub). Works best with other layers.
+**Limitations:** The firewall blocks destinations, not request contents. Three specific gaps worth naming up front:
+
+*Exfiltration via allowlisted LLM endpoints.* Some allowlisted endpoints accept arbitrary text in API requests: `api.anthropic.com`, `generativelanguage.googleapis.com`, `models.inference.ai.azure.com`, `api.githubcopilot.com`. The firewall can only see destinations, not request contents, so a compromised agent could POST stolen data to any of them. The endpoints that authenticate via the auto-injected `GITHUB_TOKEN` don't even require attacker-supplied credentials. We accept this tradeoff because the tools don't work without these entries.
+
+*Exfiltration via GitHub itself.* GitHub's IP ranges must be in the allowlist for the repo to function. With the auto-injected `GITHUB_TOKEN`, a compromised agent can `git push` to an attacker-controlled fork, create a gist, or post comments with stolen content. The firewall does not close any of these channels; see "Why No GitHub CLI?" below for related discussion.
+
+*Enforcement is bounded by the container.* The `vscode` user has passwordless `sudo` (needed for `apt install` during container setup). A compromised agent could run `sudo iptables -F` to disable the firewall entirely, or `sudo apt install gh` to undo the `gh` exclusion. The defenses here are layers a user maintains, not enforcement against an agent already executing commands as them.
 
 #### 2. Content Segregation
 
@@ -289,11 +295,7 @@ Choose less powerful tools when possible:
 
 ### Why No GitHub CLI?
 
-The `gh` CLI is **intentionally excluded** as part of our security-first approach:
-
-- **Risk:** Could be used to exfiltrate data via issues, PRs, or gists
-- **Alternative:** Standard `git` commands handle most workflows
-- **If needed:** Install manually (`sudo apt install gh`) with full awareness of the risk
+The `gh` CLI is intentionally excluded from the devcontainer image. This is partial mitigation, not enforcement: `git push` to an attacker-controlled fork uses the same auto-injected `GITHUB_TOKEN` and works without `gh`. Treat the exclusion as a signal of intent and a small friction-raiser, not a closed channel. Standard `git` handles legitimate workflows; install `gh` manually with `sudo apt install gh` if needed.
 
 ### Learn More
 
