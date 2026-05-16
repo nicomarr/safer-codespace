@@ -318,6 +318,10 @@ sudo /workspaces/safer-codespace/.devcontainer/init-firewall.sh
 
 **Solution:** Outbound SSH is restricted to hosts in the firewall allowlist, not blanket-allowed. GitHub is included automatically via the `api.github.com/meta` fetch; other SSH hosts must be added explicitly. Resolve the host's IP and add it to `.devcontainer/init-firewall.sh` alongside the other optional domains, then rebuild the container. Unlike GitHub, GitLab and Bitbucket do not publish a stable meta endpoint, so their IP ranges have to be maintained manually.
 
+**Problem:** Periodic `no route to host` errors from `claude` or related tooling
+
+**Solution:** This fork removes `sentry.io` (error reporting) and `statsig.com` (feature flags) from the firewall allowlist — both endpoints are explicitly designed to ingest arbitrary client-side data, which we treat as exfiltration surface. The tooling still functions; the error lines are the firewall blocking telemetry calls, which is intentional. If you need these endpoints for a specific workflow, add them back to `OPTIONAL_DOMAINS` in `.devcontainer/init-firewall.sh` and rebuild.
+
 **For temporary debugging:** Disable the firewall (resets on container restart):
 ```bash
 sudo iptables -F

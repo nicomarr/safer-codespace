@@ -164,9 +164,15 @@ CRITICAL_DOMAINS=(
 #      arbitrary data), so this surface increase is bounded.
 OPTIONAL_DOMAINS=(
     # --- Group 1: tooling endpoints ---
+    # Note: upstream Anthropic init-firewall.sh also includes `sentry.io` and
+    # `statsig.com` here (Sentry error reporting, Statsig feature flags used
+    # by claude-code). Omitted in this fork — both endpoints are explicitly
+    # designed to ingest arbitrary client-side data, which contradicts the
+    # template's stated posture of minimizing exfiltration surface. The
+    # tooling continues to function; users may see periodic "no route to
+    # host" errors when claude-code tries to phone home, which is the
+    # firewall doing its job. Documented in README troubleshooting.
     "registry.npmjs.org"
-    "sentry.io"
-    "statsig.com"
     "marketplace.visualstudio.com"
     "vscode.blob.core.windows.net"
     "update.code.visualstudio.com"
