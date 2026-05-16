@@ -77,6 +77,17 @@ run_check "TCP/22 to github.com (SSH endpoint)" "pass" \
     "timeout 5 bash -c '</dev/tcp/github.com/22'"
 run_check "DNS resolution of github.com" "pass" \
     "getent hosts github.com"
+# Representative sample of documentation domains used by cli-tools/url_to_markdown.py.
+# The full list lives in OPTIONAL_DOMAINS in .devcontainer/init-firewall.sh, grouped
+# as "documentation sites for url_to_markdown.py". One check per category (Python,
+# LLM/AI, cloud/enterprise) — sufficient evidence that the firewall is allowing the
+# documentation tier as a whole without bloating the test suite with 24+ checks.
+run_check "HTTPS to docs.python.org (Python docs)" "pass" \
+    "curl --connect-timeout 5 -fsS -o /dev/null https://docs.python.org/3/"
+run_check "HTTPS to docs.claude.com (LLM/AI docs)" "pass" \
+    "curl --connect-timeout 5 -fsS -o /dev/null https://docs.claude.com/"
+run_check "HTTPS to learn.microsoft.com (cloud/.NET docs)" "pass" \
+    "curl --connect-timeout 5 -fsS -o /dev/null https://learn.microsoft.com/"
 
 echo
 echo "=== Negative controls (non-allowlisted destinations should be blocked) ==="
