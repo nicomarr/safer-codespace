@@ -21,7 +21,7 @@
     }
   },
   "postCreateCommand": {
-    "system": "sudo apt-get update && sudo apt-get install -y iptables ipset dnsutils aggregate && sudo ${containerWorkspaceFolder}/.devcontainer/init-firewall.sh",
+    "system": "bash ${containerWorkspaceFolder}/.devcontainer/setup-system.sh",
     "python": "pip install uv && uv tool install llm && llm install llm-github-models llm-anthropic llm-gemini && llm models default github/gpt-4.1",
     "node": "npm install -g @anthropic-ai/claude-code rust-just @earendil-works/pi-coding-agent",
     "go": "go install github.com/charmbracelet/glow/v2@latest"
