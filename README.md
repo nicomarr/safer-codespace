@@ -252,7 +252,9 @@ for domain in \
     # ... rest of domains
 ```
 
-**Limitations:** The firewall blocks destinations, not request contents. Three specific gaps worth naming up front:
+**Limitations:** The firewall blocks destinations, not request contents. Four specific gaps worth naming up front:
+
+*Exfiltration via the Codespaces tunnel relay.* The allowlist includes GitHub's dev-tunnels service (`*.rel.tunnels.api.visualstudio.com`, "Group 3" in `init-firewall.sh`) because without it codespaces are effectively single-session: `gh codespace ssh` fails, browser reconnection after a disconnect hangs, and explicit stops wedge in `ShuttingDown` for 35 minutes to several hours (verified 2026-06-10). The tradeoff is real: the tunnel service relays arbitrary traffic by design, so a compromised agent could open its own dev tunnel as an exfiltration channel. Note that GitHub's full documented requirement list (`gh api meta --jq .domains.codespaces`) includes `*.windows.net` and `*.azureedge.net`; we deliberately do NOT allowlist those — they would permit arbitrary-content Azure hosting — and accept that some optional Codespaces features may not work.
 
 *Exfiltration via allowlisted LLM endpoints.* Some allowlisted endpoints accept arbitrary text in API requests: `api.anthropic.com`, `generativelanguage.googleapis.com`, `models.inference.ai.azure.com`, `api.githubcopilot.com`. The firewall can only see destinations, not request contents, so a compromised agent could POST stolen data to any of them. The endpoints that authenticate via the auto-injected `GITHUB_TOKEN` don't even require attacker-supplied credentials. We accept this tradeoff because the tools don't work without these entries.
 
@@ -319,6 +321,10 @@ sudo /workspaces/safer-codespace/.devcontainer/init-firewall.sh
 **Problem:** `ssh` to a non-GitHub host (own server, GitLab, Bitbucket) hangs or times out
 
 **Solution:** Outbound SSH is restricted to hosts in the firewall allowlist, not blanket-allowed. GitHub is included automatically via the `api.github.com/meta` fetch; other SSH hosts must be added explicitly. Resolve the host's IP and add it to `.devcontainer/init-firewall.sh` alongside the other optional domains, then rebuild the container. Unlike GitHub, GitLab and Bitbucket do not publish a stable meta endpoint, so their IP ranges have to be maintained manually.
+
+**Problem:** `gh codespace ssh` fails with an RPC error, reconnecting to a codespace hangs, or stopping a codespace takes 30+ minutes
+
+**Solution:** These are all symptoms of the Codespaces connectivity plane (dev tunnels) being blocked. The firewall allowlists `global.rel.tunnels.api.visualstudio.com` plus common regional hosts (Group 3 in `.devcontainer/init-firewall.sh`); if your region's host is missing, capture it during a reconnect attempt with `sudo tcpdump -n 'tcp[tcpflags] & tcp-syn != 0'` and add it to the list. `gh codespace ssh` additionally requires the `sshd` feature in `devcontainer.json` (included in this template). Sessions opened during container creation can keep working while new connections fail — the firewall's ESTABLISHED rule preserves existing flows — so "the editor works but ssh doesn't" does not rule out this cause.
 
 **Problem:** Periodic `no route to host` errors from `claude` or related tooling
 
