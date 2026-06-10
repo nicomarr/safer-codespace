@@ -216,6 +216,47 @@ OPTIONAL_DOMAINS=(
     "cloud.google.com"
     "aws.amazon.com"
     "azure.microsoft.com"
+
+    # --- Group 3: GitHub Codespaces connectivity plane (dev tunnels) ---
+    # Without these, anything needing a NEW outbound connection to the tunnel
+    # service fails once the firewall is up: `gh codespace ssh` (RPC layer),
+    # browser reconnection after disconnect, and the stop acknowledgment
+    # (observed 2026-06-10: 3/3 explicit stops wedged in ShuttingDown for
+    # 35 min-4 h; ssh RPC unreachable until OUTPUT was opened). Sessions
+    # established before the firewall activates survive via the
+    # ESTABLISHED conntrack rule, which is why the initial web session works.
+    #
+    # GitHub's documented requirement (`gh api meta --jq .domains.codespaces`)
+    # is wildcard-heavy (*.windows.net, *.azureedge.net, *.microsoft.com) and
+    # written for hostname-filtering firewalls. Resolving those wholesale would
+    # allowlist arbitrary-content Azure hosting (e.g. *.blob.core.windows.net)
+    # and gut this firewall's purpose, so we deliberately allow only the
+    # tunnel-service hosts the connectivity plane actually uses, per
+    # https://code.visualstudio.com/docs/remote/tunnels and
+    # https://docs.github.com/en/codespaces/troubleshooting/troubleshooting-your-connection-to-github-codespaces
+    #
+    # SECURITY TRADEOFF: the tunnel service relays arbitrary traffic by design,
+    # so these entries add a potential exfiltration channel (an agent could
+    # open its own dev tunnel). Documented in README's threat model. We accept
+    # this because without it codespaces are single-session and cannot stop
+    # cleanly.
+    #
+    # The {region}.rel.* names are candidates; unresolvable ones are skipped
+    # by the warn-and-continue machinery. If your region's host is missing,
+    # find it with: sudo tcpdump -n 'tcp[tcpflags] & tcp-syn != 0' during a
+    # reconnect attempt, then add it here.
+    "global.rel.tunnels.api.visualstudio.com"
+    "aue.rel.tunnels.api.visualstudio.com"   # Australia East
+    "asse.rel.tunnels.api.visualstudio.com"  # Southeast Asia
+    "brs.rel.tunnels.api.visualstudio.com"   # Brazil South
+    "euw.rel.tunnels.api.visualstudio.com"   # West Europe
+    "eun.rel.tunnels.api.visualstudio.com"   # North Europe
+    "inc.rel.tunnels.api.visualstudio.com"   # India Central
+    "uks.rel.tunnels.api.visualstudio.com"   # UK South
+    "use.rel.tunnels.api.visualstudio.com"   # East US
+    "use2.rel.tunnels.api.visualstudio.com"  # East US 2
+    "usw2.rel.tunnels.api.visualstudio.com"  # West US 2
+    "usw3.rel.tunnels.api.visualstudio.com"  # West US 3
 )
 
 for domain in "${CRITICAL_DOMAINS[@]}"; do
