@@ -69,6 +69,24 @@ for resolver in $resolvers; do
     iptables -A OUTPUT -p tcp --dport 53 -d "$resolver" -j ACCEPT
 done
 
+# Azure platform channels (Codespaces runs on Azure VMs). Evidence from
+# 2026-06-11 NFLOG capture: in-container platform components continuously
+# attempt TCP/80 to both of these and were being rejected, invisible to
+# tcpdump-on-eth0 (REJECTed packets never reach the interface):
+#   - 168.63.129.16: the Azure "wireserver" (VM fabric/orchestration channel).
+#     Azure's own guest hardening (legacy iptables *security* table, present
+#     in the Codespaces image) already restricts NEW connections here to
+#     uid 0, so this allow is effectively root-only.
+#   - 169.254.169.254: the Azure Instance Metadata Service (IMDS).
+# Stops of firewall-active codespaces wedged in ShuttingDown for 35 min-4 h
+# (5/5 observed) and post-wedge resumes destroyed container + workspace;
+# firewall-off controls stopped in ~2-3 min (2/2). These channels are the
+# prime suspect for the orchestration dependency.
+# SECURITY NOTE: IMDS is a classic SSRF/credential target; allowing it is a
+# platform-functionality tradeoff, documented in the README threat model.
+iptables -A OUTPUT -d 168.63.129.16 -p tcp --dport 80 -j ACCEPT
+iptables -A OUTPUT -d 169.254.169.254 -p tcp --dport 80 -j ACCEPT
+
 # Note: upstream init-firewall.sh has `iptables -A INPUT -p udp --sport 53 -j
 # ACCEPT` here to accept DNS responses. Removed in this fork — source ports
 # are spoofable, and the ESTABLISHED,RELATED rule added later in this script
