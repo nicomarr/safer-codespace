@@ -49,6 +49,40 @@ Get up and running in 3 steps:
 
 That's it! All tools are pre-installed and the security firewall is automatically configured.
 
+### Running locally (VS Code + Docker Desktop)
+
+The same template runs on your own machine. Validated once (2026-06-11, macOS
+on Apple Silicon): the firewall comes up during postCreate, and
+`verify-firewall.sh` passes everything except the two Azure-only checks
+(wireserver, IMDS), which fail by design outside Azure (see issue #28).
+
+1. Install and start [Docker Desktop](https://www.docker.com/products/docker-desktop/), plus the VS Code [Dev Containers extension](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers).
+2. Command Palette → **Dev Containers: Clone Repository in Container Volume...** → this repository.
+3. Same step 3 as above.
+
+**Prefer "Clone in Volume" over "Reopen in Container."** A bind mount (Reopen)
+gives the container live write access to a folder on your host. Anything it
+writes there (for example `.git/hooks` or modified scripts) can later execute
+on your machine, outside every container boundary. A volume clone keeps the
+workspace entirely inside Docker's VM, and work leaves it only via `git push`.
+Push before deleting the volume; it is the only copy.
+
+Security notes for local use, based on that single validation run rather than
+systematic testing:
+
+- The firewall behaves as on Codespaces as far as `verify-firewall.sh` can
+  observe: all negative controls held, allowlisted destinations reachable.
+- No `GITHUB_TOKEN` is auto-injected locally, so that documented exfiltration
+  channel is absent unless you authenticate tools inside the container
+  yourself. Authenticate only what you need.
+- The Codespaces stop-wedge (see Troubleshooting) depends on Azure
+  orchestration that does not exist locally, so it is not expected here.
+  Local stop/restart behavior has not been systematically tested.
+- As on Codespaces, iptables rules do not survive a container restart
+  (issue #24). After stopping and restarting the container, the firewall is
+  gone until you re-run `init-firewall.sh` or rebuild. Check with
+  `sudo iptables -L OUTPUT -n | head -1` (must say DROP) before trusting it.
+
 ---
 
 ## Prerequisites
@@ -326,7 +360,7 @@ sudo /workspaces/safer-codespace/.devcontainer/init-firewall.sh
 
 **Solution:** Symptoms of the Codespaces connectivity plane (dev tunnels) being blocked. The firewall allowlists `global.rel.tunnels.api.visualstudio.com` plus common regional hosts (Group 3 in `.devcontainer/init-firewall.sh`); if your region's host is missing, find it with the NFLOG procedure below and add it. `gh codespace ssh` additionally requires the `sshd` feature in `devcontainer.json` (included in this template). Sessions opened during container creation can keep working while new connections fail — the firewall's ESTABLISHED rule preserves existing flows — so "the editor works but ssh doesn't" does not rule out this cause.
 
-**KNOWN ISSUE — stopping a firewall-active codespace wedges in `ShuttingDown` (35 min to 4+ hours), and a resume after a wedged stop can come back in recovery mode with the container AND workspace destroyed (all uncommitted work lost).** Verified 2026-06-11 across 6 wedges and 2 firewall-off controls (~2-min stops). Allowlisting the dev-tunnels, Azure wireserver, and IMDS channels did not resolve it; the remaining continuously-rejected destination during wedges was an Azure Storage endpoint (TCP/443, 20.209.0.0/16). Until root-caused: **commit and push before stopping**, treat codespaces as disposable, and expect stops to complete eventually on the platform's force-kill timeout. Debugging tip: outbound packets REJECTed by the firewall never appear in `tcpdump -i eth0` — to see what the firewall is actually blocking, insert an NFLOG rule and capture it: `sudo iptables -I OUTPUT <n> -j NFLOG --nflog-group 5 && sudo tcpdump -i nflog:5` (where `<n>` is the REJECT rule's position).
+**KNOWN ISSUE (observed on Codespaces only): stopping a firewall-active codespace wedges in `ShuttingDown` (35 min to 4+ hours), and a resume after a wedged stop can come back in recovery mode with the container AND workspace destroyed (all uncommitted work lost).** Verified 2026-06-11 across 6 wedges and 2 firewall-off controls (~2-min stops). Allowlisting the dev-tunnels, Azure wireserver, and IMDS channels did not resolve it; the remaining continuously-rejected destination during wedges was an Azure Storage endpoint (TCP/443, 20.209.0.0/16). Until root-caused: **commit and push before stopping**, treat codespaces as disposable, and expect stops to complete eventually on the platform's force-kill timeout. Debugging tip: outbound packets REJECTed by the firewall never appear in `tcpdump -i eth0` — to see what the firewall is actually blocking, insert an NFLOG rule and capture it: `sudo iptables -I OUTPUT <n> -j NFLOG --nflog-group 5 && sudo tcpdump -i nflog:5` (where `<n>` is the REJECT rule's position).
 
 **Problem:** Periodic `no route to host` errors from `claude` or related tooling
 
