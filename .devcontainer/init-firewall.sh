@@ -86,16 +86,33 @@ iptables -A OUTPUT -o lo -j ACCEPT
 # Create ipset with CIDR support
 ipset create allowed-domains hash:net
 
-# Fetch GitHub meta information and aggregate + add their IP ranges
+# Fetch GitHub meta information and aggregate + add their IP ranges.
+#
+# Authenticate when a token is available: unauthenticated api.github.com calls
+# are rate-limited to 60/h PER SOURCE IP, and Codespaces egress IPs are shared
+# across tenants, so anonymous fetches intermittently return "API rate limit
+# exceeded" — which failed this script at container creation and left the
+# container fail-open (observed 2026-06-11). GITHUB_TOKEN is auto-injected in
+# Codespaces; setup-system.sh preserves it through sudo. For manual re-runs use:
+#   sudo --preserve-env=GITHUB_TOKEN bash .devcontainer/init-firewall.sh
 echo "Fetching GitHub IP ranges..."
-gh_ranges=$(curl -s https://api.github.com/meta)
+CURL_AUTH_ARGS=()
+if [ -n "${GITHUB_TOKEN:-}" ]; then
+    echo "  (authenticating with GITHUB_TOKEN)"
+    CURL_AUTH_ARGS=(-H "Authorization: Bearer ${GITHUB_TOKEN}")
+else
+    echo "  WARNING: GITHUB_TOKEN not set - using anonymous request (60/h shared rate limit)"
+fi
+gh_ranges=$(curl -s "${CURL_AUTH_ARGS[@]}" https://api.github.com/meta)
 if [ -z "$gh_ranges" ]; then
-    echo "ERROR: Failed to fetch GitHub IP ranges"
+    echo "ERROR: Failed to fetch GitHub IP ranges (empty response)"
     exit 1
 fi
 
 if ! echo "$gh_ranges" | jq -e '.web and .api and .git' >/dev/null; then
-    echo "ERROR: GitHub API response missing required fields"
+    echo "ERROR: GitHub API response missing required fields. Response began with:"
+    echo "$gh_ranges" | head -c 300
+    echo
     exit 1
 fi
 
