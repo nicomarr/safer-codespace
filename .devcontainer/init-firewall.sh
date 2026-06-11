@@ -79,9 +79,15 @@ done
 #     uid 0, so this allow is effectively root-only.
 #   - 169.254.169.254: the Azure Instance Metadata Service (IMDS).
 # Stops of firewall-active codespaces wedged in ShuttingDown for 35 min-4 h
-# (5/5 observed) and post-wedge resumes destroyed container + workspace;
-# firewall-off controls stopped in ~2-3 min (2/2). These channels are the
-# prime suspect for the orchestration dependency.
+# (6/6 observed) and post-wedge resumes destroyed container + workspace;
+# firewall-off controls stopped in ~2-3 min (2/2). NOTE (tested 2026-06-11):
+# allowing these two channels alone did NOT resolve the stop-wedge — a fresh
+# codespace with both rules active from boot still wedged. They are kept
+# because platform components demonstrably depend on them (continuous retry
+# stream otherwise) and the wireserver allow is root-only by Azure's own
+# guest hardening. The remaining continuously-rejected destination during
+# wedges was an Azure Storage endpoint (20.209.0.0/16 space, TCP/443) — the
+# open lead. See README "Known issues" for the stop-wedge status.
 # SECURITY NOTE: IMDS is a classic SSRF/credential target; allowing it is a
 # platform-functionality tradeoff, documented in the README threat model.
 iptables -A OUTPUT -d 168.63.129.16 -p tcp --dport 80 -j ACCEPT
