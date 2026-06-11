@@ -69,6 +69,30 @@ for resolver in $resolvers; do
     iptables -A OUTPUT -p tcp --dport 53 -d "$resolver" -j ACCEPT
 done
 
+# Azure platform channels (Codespaces runs on Azure VMs). Evidence from
+# 2026-06-11 NFLOG capture: in-container platform components continuously
+# attempt TCP/80 to both of these and were being rejected, invisible to
+# tcpdump-on-eth0 (REJECTed packets never reach the interface):
+#   - 168.63.129.16: the Azure "wireserver" (VM fabric/orchestration channel).
+#     Azure's own guest hardening (legacy iptables *security* table, present
+#     in the Codespaces image) already restricts NEW connections here to
+#     uid 0, so this allow is effectively root-only.
+#   - 169.254.169.254: the Azure Instance Metadata Service (IMDS).
+# Stops of firewall-active codespaces wedged in ShuttingDown for 35 min-4 h
+# (6/6 observed) and post-wedge resumes destroyed container + workspace;
+# firewall-off controls stopped in ~2-3 min (2/2). NOTE (tested 2026-06-11):
+# allowing these two channels alone did NOT resolve the stop-wedge — a fresh
+# codespace with both rules active from boot still wedged. They are kept
+# because platform components demonstrably depend on them (continuous retry
+# stream otherwise) and the wireserver allow is root-only by Azure's own
+# guest hardening. The remaining continuously-rejected destination during
+# wedges was an Azure Storage endpoint (20.209.0.0/16 space, TCP/443) — the
+# open lead. See README "Known issues" for the stop-wedge status.
+# SECURITY NOTE: IMDS is a classic SSRF/credential target; allowing it is a
+# platform-functionality tradeoff, documented in the README threat model.
+iptables -A OUTPUT -d 168.63.129.16 -p tcp --dport 80 -j ACCEPT
+iptables -A OUTPUT -d 169.254.169.254 -p tcp --dport 80 -j ACCEPT
+
 # Note: upstream init-firewall.sh has `iptables -A INPUT -p udp --sport 53 -j
 # ACCEPT` here to accept DNS responses. Removed in this fork — source ports
 # are spoofable, and the ESTABLISHED,RELATED rule added later in this script
@@ -86,16 +110,33 @@ iptables -A OUTPUT -o lo -j ACCEPT
 # Create ipset with CIDR support
 ipset create allowed-domains hash:net
 
-# Fetch GitHub meta information and aggregate + add their IP ranges
+# Fetch GitHub meta information and aggregate + add their IP ranges.
+#
+# Authenticate when a token is available: unauthenticated api.github.com calls
+# are rate-limited to 60/h PER SOURCE IP, and Codespaces egress IPs are shared
+# across tenants, so anonymous fetches intermittently return "API rate limit
+# exceeded" — which failed this script at container creation and left the
+# container fail-open (observed 2026-06-11). GITHUB_TOKEN is auto-injected in
+# Codespaces; setup-system.sh preserves it through sudo. For manual re-runs use:
+#   sudo --preserve-env=GITHUB_TOKEN bash .devcontainer/init-firewall.sh
 echo "Fetching GitHub IP ranges..."
-gh_ranges=$(curl -s https://api.github.com/meta)
+CURL_AUTH_ARGS=()
+if [ -n "${GITHUB_TOKEN:-}" ]; then
+    echo "  (authenticating with GITHUB_TOKEN)"
+    CURL_AUTH_ARGS=(-H "Authorization: Bearer ${GITHUB_TOKEN}")
+else
+    echo "  WARNING: GITHUB_TOKEN not set - using anonymous request (60/h shared rate limit)"
+fi
+gh_ranges=$(curl -s "${CURL_AUTH_ARGS[@]}" https://api.github.com/meta)
 if [ -z "$gh_ranges" ]; then
-    echo "ERROR: Failed to fetch GitHub IP ranges"
+    echo "ERROR: Failed to fetch GitHub IP ranges (empty response)"
     exit 1
 fi
 
 if ! echo "$gh_ranges" | jq -e '.web and .api and .git' >/dev/null; then
-    echo "ERROR: GitHub API response missing required fields"
+    echo "ERROR: GitHub API response missing required fields. Response began with:"
+    echo "$gh_ranges" | head -c 300
+    echo
     exit 1
 fi
 
@@ -216,6 +257,47 @@ OPTIONAL_DOMAINS=(
     "cloud.google.com"
     "aws.amazon.com"
     "azure.microsoft.com"
+
+    # --- Group 3: GitHub Codespaces connectivity plane (dev tunnels) ---
+    # Without these, anything needing a NEW outbound connection to the tunnel
+    # service fails once the firewall is up: `gh codespace ssh` (RPC layer),
+    # browser reconnection after disconnect, and the stop acknowledgment
+    # (observed 2026-06-10: 3/3 explicit stops wedged in ShuttingDown for
+    # 35 min-4 h; ssh RPC unreachable until OUTPUT was opened). Sessions
+    # established before the firewall activates survive via the
+    # ESTABLISHED conntrack rule, which is why the initial web session works.
+    #
+    # GitHub's documented requirement (`gh api meta --jq .domains.codespaces`)
+    # is wildcard-heavy (*.windows.net, *.azureedge.net, *.microsoft.com) and
+    # written for hostname-filtering firewalls. Resolving those wholesale would
+    # allowlist arbitrary-content Azure hosting (e.g. *.blob.core.windows.net)
+    # and gut this firewall's purpose, so we deliberately allow only the
+    # tunnel-service hosts the connectivity plane actually uses, per
+    # https://code.visualstudio.com/docs/remote/tunnels and
+    # https://docs.github.com/en/codespaces/troubleshooting/troubleshooting-your-connection-to-github-codespaces
+    #
+    # SECURITY TRADEOFF: the tunnel service relays arbitrary traffic by design,
+    # so these entries add a potential exfiltration channel (an agent could
+    # open its own dev tunnel). Documented in README's threat model. We accept
+    # this because without it codespaces are single-session and cannot stop
+    # cleanly.
+    #
+    # The {region}.rel.* names are candidates; unresolvable ones are skipped
+    # by the warn-and-continue machinery. If your region's host is missing,
+    # find it with: sudo tcpdump -n 'tcp[tcpflags] & tcp-syn != 0' during a
+    # reconnect attempt, then add it here.
+    "global.rel.tunnels.api.visualstudio.com"
+    "aue.rel.tunnels.api.visualstudio.com"   # Australia East
+    "asse.rel.tunnels.api.visualstudio.com"  # Southeast Asia
+    "brs.rel.tunnels.api.visualstudio.com"   # Brazil South
+    "euw.rel.tunnels.api.visualstudio.com"   # West Europe
+    "eun.rel.tunnels.api.visualstudio.com"   # North Europe
+    "inc.rel.tunnels.api.visualstudio.com"   # India Central
+    "uks.rel.tunnels.api.visualstudio.com"   # UK South
+    "use.rel.tunnels.api.visualstudio.com"   # East US
+    "use2.rel.tunnels.api.visualstudio.com"  # East US 2
+    "usw2.rel.tunnels.api.visualstudio.com"  # West US 2
+    "usw3.rel.tunnels.api.visualstudio.com"  # West US 3
 )
 
 for domain in "${CRITICAL_DOMAINS[@]}"; do

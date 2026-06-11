@@ -5,7 +5,8 @@
     "ghcr.io/devcontainers/features/node:1": {
       "version": "24"
     },
-    "ghcr.io/devcontainers/features/go:1": {}
+    "ghcr.io/devcontainers/features/go:1": {},
+    "ghcr.io/devcontainers/features/sshd:1": {}
   },
   "runArgs": [
     "--cap-add=NET_ADMIN",

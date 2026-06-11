@@ -39,5 +39,7 @@ for attempt in $(seq 1 "$APT_MAX_ATTEMPTS"); do
 done
 
 # Run the firewall init script. set -e ensures we don't reach this if
-# apt failed all retries above.
-sudo "$(dirname "$0")/init-firewall.sh"
+# apt failed all retries above. GITHUB_TOKEN is preserved so the script's
+# api.github.com/meta fetch is authenticated (anonymous requests share a
+# per-IP rate limit across Codespaces tenants and fail intermittently).
+sudo --preserve-env=GITHUB_TOKEN "$(dirname "$0")/init-firewall.sh"
