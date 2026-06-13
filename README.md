@@ -29,7 +29,7 @@ An **experimental** development environment exploring defense-in-depth approache
 Get up and running in 3 steps:
 
 1. **Click "Use this template"** to create your repository
-2. **Open in GitHub Codespaces** (or your preferred devcontainer host)
+2. **Open the devcontainer.** For security-sensitive work, use local Docker with a volume clone (recommended; see below). GitHub Codespaces also works one-click, but with a documented firewall caveat (see below).
 3. **Start coding** with your choice of AI tool:
   ```bash
   # For complex, multi-step tasks with file access, use Claude Code
@@ -47,18 +47,19 @@ Get up and running in 3 steps:
   git diff --staged | llm -s "Generate a conventional commit message from these changes"
   ```
 
-That's it! All tools are pre-installed and the security firewall is automatically configured.
+That's it! All tools are pre-installed and the security firewall is automatically configured. (On first use, choose an `llm` model; see [Prerequisites](#prerequisites).)
 
-### Running locally (VS Code + Docker Desktop)
+### Recommended: local Docker (VS Code + Docker Desktop)
 
-The same template runs on your own machine. The firewall comes up during
-postCreate and re-applies automatically on restart; `verify-firewall.sh` should
-pass locally (a `learn.microsoft.com` positive control may intermittently FAIL
-due to CDN IP rotation — see issue #27).
+For security-sensitive work this is the supported path. The Codespaces-specific
+failure class (see [KNOWN ISSUE](#troubleshooting)) does not arise with a local
+filesystem, and no `GITHUB_TOKEN` is auto-injected. The firewall comes up during
+postCreate, re-applies automatically on restart (see below), and
+`verify-firewall.sh` should pass locally.
 
 1. Install and start [Docker Desktop](https://www.docker.com/products/docker-desktop/), plus the VS Code [Dev Containers extension](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers).
 2. Command Palette → **Dev Containers: Clone Repository in Container Volume...** → this repository.
-3. Same step 3 as above.
+3. **Start coding** with your AI tool of choice: the `claude`, `pi`, or `llm` commands shown in step 3 of Quick Start above.
 
 **Prefer "Clone in Volume" over "Reopen in Container."** A bind mount (Reopen)
 gives the container live write access to a folder on your host. Anything it
@@ -67,8 +68,7 @@ on your machine, outside every container boundary. A volume clone keeps the
 workspace entirely inside Docker's VM, and work leaves it only via `git push`.
 Push before deleting the volume; it is the only copy.
 
-Security notes for local use, based on that single validation run rather than
-systematic testing:
+Security notes for local use:
 
 - The firewall behaves as on Codespaces as far as `verify-firewall.sh` can
   observe: all negative controls held, allowlisted destinations reachable.
@@ -80,10 +80,31 @@ systematic testing:
   container has a local filesystem, so there is no storage backend for the
   firewall to starve and the failure class does not arise here. This is the
   main reason to prefer local Docker for security-sensitive work.
-- As on Codespaces, iptables rules do not survive a container restart
-  (issue #24). After stopping and restarting the container, the firewall is
-  gone until you re-run `init-firewall.sh` or rebuild. Check with
-  `sudo iptables -L OUTPUT -n | head -1` (must say DROP) before trusting it.
+- iptables rules live in the container's network namespace and are wiped on
+  every restart, but locally the firewall is re-applied automatically on
+  container start via `postStartCommand` → `reapply-firewall.sh` (issue #24),
+  which fails closed if it cannot complete. On Codespaces this re-apply is
+  deliberately skipped (re-arming the firewall there re-triggers the storage
+  wedge; see Troubleshooting), so a resumed codespace comes back unprotected
+  by design. It is still good practice to confirm with
+  `sudo iptables -L OUTPUT -n | head -1` (must say DROP) before trusting a
+  freshly restarted container.
+
+### Using GitHub Codespaces
+
+Codespaces runs the same template in the browser with no local setup, but this
+template's strict egress firewall is fundamentally at odds with the Codespaces
+network-backed filesystem (Azure Storage): stopping a firewall-active codespace
+can wedge in `ShuttingDown` for 35 minutes to several hours, and a resume after a
+wedged stop can come back with the container **and** workspace destroyed
+(uncommitted work lost). This is a deliberate won't-fix (see the
+[KNOWN ISSUE](#troubleshooting) and issue #23), and it is why local Docker is the
+recommended path for security-sensitive work. If you do use Codespaces, **commit
+and push before stopping**, and note that a resumed codespace comes back without
+the firewall by design.
+
+To start: on your repository, **Code → Codespaces → Create codespace on main**,
+then use the same `claude` / `pi` / `llm` tools shown in step 3 of Quick Start above.
 
 ---
 
@@ -92,15 +113,15 @@ systematic testing:
 Before using this template, ensure you have:
 
 - **Required:**
-  - [GitHub account](https://github.com/signup) (for Codespaces or template usage)
-  - [Docker Desktop](https://www.docker.com/products/docker-desktop/) (for local devcontainer usage)
+  - [Docker Desktop](https://www.docker.com/products/docker-desktop/) (recommended local environment; see [Quick Start](#quick-start))
+  - [GitHub account](https://github.com/signup) (to use the template and for `git`)
 
 - **Optional (for AI features):**
   - [Anthropic API key](https://console.anthropic.com/) (for Claude Code and `llm` Claude models)
-  - [GitHub Models access](https://github.com/marketplace/models) (free GPT-4o via `llm` - default)
+  - [GitHub Models access](https://github.com/marketplace/models) (free tier for `llm`, where available)
   - [Google AI Studio key](https://aistudio.google.com/) (for `llm` Gemini models)
 
-The default configuration uses **GitHub's free GPT-4o** model, so you can start immediately without any API keys.
+**No `llm` model is set by default; choose one before first use.** The template installs plugins for **GitHub Models**, **Anthropic Claude**, and **Google Gemini**; pick a provider, add its key (`llm keys set <provider>`), then set a default from `llm models list` (`llm models default <model>`). In Codespaces, GitHub Models is the lowest-friction option because a `GITHUB_TOKEN` is auto-injected, so `github/gpt-4.1` works without a separate key. Enable only the provider you actually use: each allowlisted LLM endpoint is an exfiltration channel (see [Understanding the Security Model](#understanding-the-security-model)), so fewer is safer.
 
 ---
 
@@ -113,10 +134,10 @@ This devcontainer comes pre-configured with:
   - Default: Claude Code (requires Anthropic API key)
   - Plugins: File System, Shell Command Execution
   - Optional: Use with **[SpecStory](https://specstory.com/)** to auto-save conversations as markdown ([installation guide](docs/SpecStory-Installation.md))
-- **[Pi](https://pi.dev)** by Mario Zechner & contributors (Earendil Works) — a terminal coding harness with file access and bash execution, supporting multiple LLM providers (Claude, GPT, GitHub Copilot). In Codespaces, Pi works out of the box with GitHub Copilot — no extra authentication needed.
+- **[Pi](https://pi.dev)** by Mario Zechner & contributors (Earendil Works), a terminal coding harness with file access and bash execution, supporting multiple LLM providers (Claude, GPT, GitHub Copilot). In Codespaces, Pi works out of the box with GitHub Copilot; no extra authentication needed.
 - **[llm](https://llm.datasette.io/)** developed by Simon Willison, A CLI tool for interacting with OpenAI, Anthropic's Claude, Google's Gemini, Meta's Llama and dozens of other Large Language Models
-  - Default: GitHub GPT-4o (free, no API key required)
-  - Plugins: Anthropic Claude, Google Gemini, GitHub Models
+  - No model set by default; choose one before first use (see Prerequisites)
+  - Plugins: GitHub Models, Anthropic Claude, Google Gemini
 
 ### Language Environments
 - **Python 3.13** with `uv` (fast package manager) and `pip`
@@ -128,7 +149,7 @@ This devcontainer comes pre-configured with:
 - **[just](https://just.systems/)** - Simple command runner (like make, but better)
 
 ### Security Features
-- **Network firewall** - Blocks unauthorized outbound connections (auto-configured). The allowlist covers SSH as well as HTTP/S, so `ssh` to non-allowlisted hosts is blocked. GitHub-over-SSH works out of the box because GitHub's SSH endpoints are included via the `api.github.com/meta` fetch. **DNS egress is restricted to the resolvers configured in `/etc/resolv.conf` and `/run/systemd/resolve/resolv.conf`**, closing direct DNS-tunnel exfiltration to attacker-controlled nameservers (DNS through the legitimate resolver chain is not closed — that would need application-layer DNS filtering, out of scope for an iptables-based control).
+- **Network firewall** - Blocks unauthorized outbound connections (auto-configured). The allowlist covers SSH as well as HTTP/S, so `ssh` to non-allowlisted hosts is blocked. GitHub-over-SSH works out of the box because GitHub's SSH endpoints are included via the `api.github.com/meta` fetch. **DNS egress is restricted to the resolvers configured in `/etc/resolv.conf` and `/run/systemd/resolve/resolv.conf`**, closing direct DNS-tunnel exfiltration to attacker-controlled nameservers (DNS through the legitimate resolver chain is not closed; that would need application-layer DNS filtering, out of scope for an iptables-based control). **IPv6 egress is locked down** (`ip6tables` default-DROP, loopback only): the allowlist is built from IPv4 A-records only, so any v6 route would otherwise bypass the firewall entirely (issue #25).
 - **Content segregation** - Separate `context/trusted/` and `context/untrusted/` directories
 - **No GitHub CLI** - Intentionally excluded to prevent potential data exfiltration
 
@@ -146,10 +167,10 @@ This devcontainer comes pre-configured with:
 
 Not every task needs an AI agent. The tools in this template trade capability against risk:
 
-- **Claude Code / Pi** — file access plus shell execution. Best for multi-step development: codebase exploration, test-driven development, refactoring across files. Also the most powerful target for prompt injection — give them the deepest care about what they read.
-- **`llm`** — text in, text out. No file access, no command execution. Use for piping CLI output (e.g. `git diff --staged | llm "write a commit message"`), explaining errors, quick code review. Damage from a compromised prompt is limited to text you explicitly provide.
-- **VS Code with LLM integration** — inline edits scoped to the file you're looking at. You remain in control of what changes.
-- **No AI at all** — for routine git operations, package installs, running tests, simple config changes. Faster, safer, no surprises.
+- **Claude Code / Pi**: file access plus shell execution. Best for multi-step development: codebase exploration, test-driven development, refactoring across files. Also the most powerful target for prompt injection, so give them the deepest care about what they read.
+- **`llm`**: text in, text out. No file access, no command execution. Use for piping CLI output (e.g. `git diff --staged | llm "write a commit message"`), explaining errors, quick code review. Damage from a compromised prompt is limited to text you explicitly provide.
+- **VS Code with LLM integration**: inline edits scoped to the file you're looking at. You remain in control of what changes.
+- **No AI at all**: for routine git operations, package installs, running tests, simple config changes. Faster, safer, no surprises.
 
 ---
 
@@ -178,7 +199,7 @@ SpecStory automatically saves your Claude Code conversations as clean, searchabl
 # Install SpecStory (optional, see installation guide)
 # Follow instructions at: docs/SpecStory-Installation.md
 
-# Run Claude Code with SpecStory (telemetry disabled — see note below)
+# Run Claude Code with SpecStory (telemetry disabled; see note below)
 specstory run --no-usage-analytics claude
 
 # Your conversations are automatically saved to .specstory/
@@ -199,7 +220,7 @@ SpecStory documentation pages: https://docs.specstory.com/overview
 
 ### llm CLI
 
-Command-line interface for various language models. Uses GitHub GPT-4o by default (no API key required).
+Command-line interface for various language models. No model is set by default, so pick a provider, add its key, and set a default (`llm models default <model>`); see [Prerequisites](#prerequisites). In Codespaces, `github/gpt-4.1` works with the auto-injected `GITHUB_TOKEN`.
 
 ```bash
 # Basic usage - pipe input to llm
@@ -217,8 +238,8 @@ llm chat
 # List available models
 llm models list
 
-# Change default model
-llm models default claude-3-5-sonnet-latest
+# Set / change the default model (use an id from `llm models list`)
+llm models default <model>
 
 # View comprehensive help
 llm --help
@@ -266,8 +287,8 @@ This template uses **multiple redundant layers** rather than relying on any sing
 - **Allowed domains:** GitHub, npm, PyPI, Anthropic API, Google Gemini API, etc.
 - **Automatically configured** on container startup
 - **Validates rules** to ensure proper function
-- **Fails closed:** if `init-firewall.sh` cannot complete — a network error, a
-  bad precondition, or a signal such as SIGHUP from a terminal closing mid-run —
+- **Fails closed:** if `init-firewall.sh` cannot complete (a network error, a
+  bad precondition, or a signal such as SIGHUP from a terminal closing mid-run),
   it locks the container down (egress blocked, loopback only) instead of leaving
   it open. A security control must fail closed, not silently open. Re-run the
   script to restore normal operation; for manual re-runs, detach so a closing
@@ -283,7 +304,7 @@ tests/network/test_connectivity.sh
 ```bash
 bash tests/codespace/verify-firewall.sh
 ```
-Runs positive controls (HTTPS, TCP/22, DNS to allowlisted destinations should succeed) and negative controls (the same to non-allowlisted destinations should be blocked). Exits 0 only if all checks pass. CI cannot exercise this — `init-firewall.sh` skips itself when `CI=true` because `devcontainers/ci@v0.2`'s nested-docker context does not support iptables properly. After modifying `init-firewall.sh`, open a fresh Codespace on the PR branch, run the script, and paste the output into the PR description as evidence.
+Runs positive controls (HTTPS, TCP/22, DNS to allowlisted destinations should succeed) and negative controls (the same to non-allowlisted destinations should be blocked). Exits 0 only if all checks pass. CI cannot exercise this: `init-firewall.sh` skips itself when `CI=true` because `devcontainers/ci@v0.2`'s nested-docker context does not support iptables properly. After modifying `init-firewall.sh`, open a fresh Codespace on the PR branch, run the script, and paste the output into the PR description as evidence.
 
 **Add new domains:**
 Edit `.devcontainer/init-firewall.sh` and add to the domain list around line 67:
@@ -295,15 +316,15 @@ for domain in \
     # ... rest of domains
 ```
 
-**Limitations:** The firewall blocks destinations, not request contents. Four specific gaps worth naming up front:
+**Limitations:** The firewall blocks destinations, not request contents. Four gaps worth naming up front:
 
-*Exfiltration via the Codespaces tunnel relay.* The allowlist includes GitHub's dev-tunnels service (`*.rel.tunnels.api.visualstudio.com`, "Group 3" in `init-firewall.sh`) because without it codespaces are effectively single-session: `gh codespace ssh` fails, browser reconnection after a disconnect hangs, and explicit stops wedge in `ShuttingDown` for 35 minutes to several hours (verified 2026-06-10). The tradeoff is real: the tunnel service relays arbitrary traffic by design, so a compromised agent could open its own dev tunnel as an exfiltration channel. Note that GitHub's full documented requirement list (`gh api meta --jq .domains.codespaces`) includes `*.windows.net` and `*.azureedge.net`; we deliberately do NOT allowlist those — they would permit arbitrary-content Azure hosting — and accept that some optional Codespaces features may not work.
+*Codespaces tunnel relay.* The allowlist includes GitHub's dev-tunnels service (`*.rel.tunnels.api.visualstudio.com`, "Group 3" in `init-firewall.sh`); without it `gh codespace ssh` fails and browser reconnection hangs. The tradeoff: the tunnel relays arbitrary traffic by design, so a compromised agent could open its own dev tunnel to exfiltrate. We deliberately do NOT allowlist the broader Azure wildcards GitHub lists (`*.windows.net`, `*.azureedge.net`), which would permit arbitrary-content hosting.
 
-*Exfiltration via allowlisted LLM endpoints.* Some allowlisted endpoints accept arbitrary text in API requests: `api.anthropic.com`, `generativelanguage.googleapis.com`, `models.inference.ai.azure.com`, `api.githubcopilot.com`. The firewall can only see destinations, not request contents, so a compromised agent could POST stolen data to any of them. The endpoints that authenticate via the auto-injected `GITHUB_TOKEN` don't even require attacker-supplied credentials. We accept this tradeoff because the tools don't work without these entries.
+*Allowlisted LLM endpoints.* Endpoints such as `api.anthropic.com` and `models.inference.ai.azure.com` accept arbitrary text, so a compromised agent could POST stolen data to one. Enable only the provider you actually use (see Prerequisites) to keep this surface small.
 
-*Exfiltration via GitHub itself.* GitHub's IP ranges must be in the allowlist for the repo to function. With the auto-injected `GITHUB_TOKEN`, a compromised agent can `git push` to an attacker-controlled fork, create a gist, or post comments with stolen content. The firewall does not close any of these channels; see "Why No GitHub CLI?" below for related discussion.
+*GitHub itself.* GitHub's IP ranges must be allowlisted for the repo to work, so with the auto-injected `GITHUB_TOKEN` an agent can `git push` to a fork, create a gist, or post comments with stolen content. See "Why No GitHub CLI?" below.
 
-*Enforcement is bounded by the container.* The `vscode` user has passwordless `sudo` (needed for `apt install` during container setup). A compromised agent could run `sudo iptables -F` to disable the firewall entirely, or `sudo apt install gh` to undo the `gh` exclusion. The defenses here are layers a user maintains, not enforcement against an agent already executing commands as them.
+*Bounded by the container.* The `vscode` user has passwordless `sudo` (needed for setup), so a compromised agent could run `sudo iptables -F` to drop the firewall or `sudo apt install gh`. These are layers a user maintains, not enforcement against an agent already running as them.
 
 #### 2. Content Segregation
 
@@ -345,8 +366,8 @@ The `gh` CLI is intentionally excluded from the devcontainer image. This is part
 ### Learn More
 
 Curated reading in `context/trusted/`:
-- `simon-willison-weblog-content/` — original 2022 post coining "prompt injection", the 2025 "lethal trifecta" framing, real-world examples of attacks on major AI systems.
-- `github-blog-posts/github-actions-workflow-injection-risks.md` — GitHub Actions–specific injection vectors.
+- `simon-willison-weblog-content/`: original 2022 post coining "prompt injection", the 2025 "lethal trifecta" framing, real-world examples of attacks on major AI systems.
+- `github-blog-posts/github-actions-workflow-injection-risks.md`: GitHub Actions-specific injection vectors.
 
 ---
 
@@ -367,25 +388,19 @@ sudo /workspaces/safer-codespace/.devcontainer/init-firewall.sh
 
 **Problem:** `gh codespace ssh` fails with an RPC error, or reconnecting to a codespace hangs
 
-**Solution:** Symptoms of the Codespaces connectivity plane (dev tunnels) being blocked. The firewall allowlists `global.rel.tunnels.api.visualstudio.com` plus common regional hosts (Group 3 in `.devcontainer/init-firewall.sh`); if your region's host is missing, find it with the NFLOG procedure below and add it. `gh codespace ssh` additionally requires the `sshd` feature in `devcontainer.json` (included in this template). Sessions opened during container creation can keep working while new connections fail — the firewall's ESTABLISHED rule preserves existing flows — so "the editor works but ssh doesn't" does not rule out this cause.
+**Solution:** The Codespaces dev-tunnel endpoints are blocked. The firewall allowlists `global.rel.tunnels.api.visualstudio.com` plus common regional hosts (Group 3 in `init-firewall.sh`); add your region's host if it is missing. `gh codespace ssh` also needs the `sshd` feature (included here). Existing sessions survive via the ESTABLISHED rule, so "the editor works but ssh doesn't" doesn't rule this out.
 
-**KNOWN ISSUE (Codespaces only): with the storage backend blocked, stopping a firewall-active codespace wedges in `ShuttingDown` (35 min to 4+ hours), and a resume after a wedged stop can come back in recovery mode with the container AND workspace destroyed (all uncommitted work lost).**
+> **KNOWN ISSUE (Codespaces only).** Stopping a firewall-active codespace can wedge in `ShuttingDown` for 35 minutes to several hours, and a resume after a wedged stop can return in recovery mode with the container **and** workspace destroyed (uncommitted work lost). Cause: the firewall starves the Codespaces network-backed filesystem (Azure Storage), so uncached reads fault (`Input/output error`, or `Bus error` on mmap). Strict egress control and a network-backed filesystem are fundamentally incompatible, so we deliberately do **not** allowlist the storage backend. **For security-sensitive work, run locally (Clone in Volume)**, where this failure class cannot occur; if you must use Codespaces, **commit and push before stopping**. Full root-cause analysis, the A/B proof, and the won't-fix decision: [issue #23](https://github.com/nicomarr/safer-codespace/issues/23).
 
-**Root cause (confirmed 2026-06-13):** a Codespace's container filesystem is backed by Azure Storage over the network, and that traffic transits the firewall's `OUTPUT` chain. The default-DROP policy starves it — cached pages keep working, but any read that misses page cache cannot reach the backing store and faults (`Input/output error` on ordinary reads, `Bus error` / SIGBUS on mmap). The same blocked storage is what a `stop` cannot flush to (the wedge) and what `resume` cannot read back (the data loss). Proven by a clean A/B test: `date` returns EIO with the firewall closed and works the instant it is opened; and a stop with the Azure Storage backend ranges allowed completed cleanly in ~2m40s (vs. the multi-hour wedges) with an intact workspace on resume.
-
-**Workaround today:** prefer running locally (Clone in Volume), where the filesystem is local and the failure class does not exist. If you must use Codespaces, **commit and push before stopping**, treat codespaces as disposable, and expect a wedged stop to complete only on the platform's force-kill timeout.
-
-**Decision (2026-06-13): we deliberately do NOT allowlist the storage backend.** Making it reachable would require permitting the Azure "Storage" service-tag ranges for the whole region — a large, rotating IP surface that any storage account in-region lives behind. That directly undermines the egress control this template exists to provide (a compromised agent with any storage credential could exfiltrate there). Strict default-DROP egress control and a network-backed container filesystem are fundamentally incompatible, so the resolution is environmental, not a code change: **for security-sensitive work, run locally (Clone in Volume)**, where the filesystem is local and the failure class cannot occur. On Codespaces, either run without the firewall or accept the storage-allow tradeoff yourself (a hostname-aware egress proxy that permits only specific storage-account FQDNs is the one design that could reconcile the two, but is out of scope here). See issue #23 for the full analysis.
-
-Debugging tip: outbound packets REJECTed by the firewall never appear in `tcpdump -i eth0` (they die in `OUTPUT` before the capture tap) — to see what the firewall is actually blocking, insert an NFLOG rule and capture it: `sudo iptables -I OUTPUT <n> -j NFLOG --nflog-group 5 && sudo tcpdump -i nflog:5` (where `<n>` is the REJECT rule's position). To find the storage backend directly: open the firewall briefly and run `ss -tn | grep ESTAB` — the persistent `:443` connections to Azure Storage ranges are it.
+**Debugging which traffic the firewall blocks:** REJECTed packets never appear in `tcpdump -i eth0`; capture them with an NFLOG rule instead, and find the storage backend with `ss -tn | grep ESTAB`; full technique in [issue #23](https://github.com/nicomarr/safer-codespace/issues/23).
 
 **Problem:** Periodic `no route to host` errors from `claude` or related tooling
 
-**Solution:** This fork removes `sentry.io` (error reporting) and `statsig.com` (feature flags) from the firewall allowlist — both endpoints are explicitly designed to ingest arbitrary client-side data, which we treat as exfiltration surface. The tooling still functions; the error lines are the firewall blocking telemetry calls, which is intentional. If you need these endpoints for a specific workflow, add them back to `OPTIONAL_DOMAINS` in `.devcontainer/init-firewall.sh` and rebuild.
+**Solution:** Expected behavior: `sentry.io` (error reporting) and `statsig.com` (feature flags) are deliberately not allowlisted, since both ingest arbitrary client data. The tools still work; the errors are just blocked telemetry. Re-add them to `OPTIONAL_DOMAINS` in `init-firewall.sh` and rebuild if a workflow needs them.
 
 **Problem:** an allowlisted documentation site intermittently fails to load
 
-**Solution:** The firewall allowlists IPs from a one-time DNS snapshot taken when `init-firewall.sh` runs. CDN-fronted doc sites (Akamai/Cloudflare/Fastly) rotate their A-records, so the live IP can drift off the snapshot and the connection is blocked — the same IP-cannot-express-hostname limit described for the storage backend in [issue #23](https://github.com/nicomarr/safer-codespace/issues/23). The doc-site allowlist (Group 2 in `init-firewall.sh`) is therefore **best-effort**: re-run `init-firewall.sh` to refresh the snapshot if a specific allowed doc site fails. `learn.microsoft.com` was removed outright (issue #27) as the worst offender (large Akamai pool) and because its shared CDN IPs widen the surface; re-add it there and in `cli-tools/url_to_markdown.py` if you need Microsoft Learn docs.
+**Solution:** The firewall allowlists IPs from a one-time DNS snapshot, but CDN-fronted sites rotate their A-records, so the live IP can drift out of the allowlist. Re-run `init-firewall.sh` to refresh the snapshot; the doc-site allowlist (Group 2) is best-effort by design. `learn.microsoft.com` was removed as the worst offender; rationale and how to re-add it in [issue #27](https://github.com/nicomarr/safer-codespace/issues/27).
 
 **For temporary debugging:** Disable the firewall (resets on container restart):
 ```bash
@@ -411,16 +426,17 @@ sudo iptables -X
 
 ### llm Issues
 
-**Problem:** "No API key configured"
+**Problem:** `No key found` / "No API key configured" (e.g. running `llm` before configuring a model)
 
-**Solution:** The default GitHub GPT-4o model should work without keys. If using other models:
+**Solution:** No model is set by default, so configure one. In Codespaces, GitHub Models works with the auto-injected `GITHUB_TOKEN`, so just set it as the default. Otherwise, set a provider key and make it the default:
 ```bash
-# Set API keys
-llm keys set anthropic
-llm keys set openai
+# In Codespaces (token already injected), just pick the default:
+llm models default github/gpt-4.1
 
-# Verify models are available
+# Anywhere else: set a provider key, list models, then set a default
+llm keys set anthropic          # or: github / gemini
 llm models list
+llm models default <model>      # use an id from 'llm models list'
 ```
 
 **Problem:** `llm` command not found
@@ -439,13 +455,13 @@ llm models list
 
 ## Contributing
 
-This is an experimental repository exploring prompt-injection mitigations — not a claim that prompt injection is solved. Bug reports, security critiques, and suggestions that fit the defense-in-depth model are welcome via GitHub Issues or PRs.
+This is an experimental repository exploring prompt-injection mitigations, not a claim that prompt injection is solved. Bug reports, security critiques, and suggestions that fit the defense-in-depth model are welcome via GitHub Issues or PRs.
 
 ---
 
 ## License
 
-MIT License — see [LICENSE](LICENSE).
+MIT License. See [LICENSE](LICENSE).
 
 ---
 
