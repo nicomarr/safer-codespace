@@ -9,6 +9,10 @@ on:
   workflow_dispatch:
     # Manual trigger for on-demand testing
 
+# Minimal token scope (issue #26).
+permissions:
+  contents: read
+
 jobs:
   connectivity-test:
     runs-on: ubuntu-latest
