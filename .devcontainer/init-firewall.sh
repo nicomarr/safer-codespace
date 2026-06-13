@@ -31,6 +31,13 @@ fail_closed() {
     iptables -F              || true
     iptables -A INPUT  -i lo -j ACCEPT || true
     iptables -A OUTPUT -o lo -j ACCEPT || true
+    # IPv6 too (issue #25): the allowlist is IPv4-only, so any v6 egress would
+    # bypass the firewall. Best-effort lockdown on the error path.
+    if command -v ip6tables >/dev/null 2>&1; then
+        ip6tables -P OUTPUT DROP  || true
+        ip6tables -P INPUT DROP   || true
+        ip6tables -P FORWARD DROP || true
+    fi
 }
 on_exit() {
     local rc=$?
@@ -360,6 +367,27 @@ iptables -A OUTPUT -d "$HOST_NETWORK" -j ACCEPT
 iptables -P INPUT DROP
 iptables -P FORWARD DROP
 iptables -P OUTPUT DROP
+
+# --- IPv6: fail closed (issue #25) -------------------------------------------
+# The allowlist is built from A records (IPv4) only — no IPv6 destination is
+# ever allowlisted — so any IPv6 egress would necessarily bypass this firewall.
+# Lock IPv6 down to loopback only. If the container has no IPv6 route this is a
+# no-op; if it ever gains one (Docker enable_ipv6, a v6-capable host, a future
+# platform change), traffic cannot slip around the IPv4 rules. Done here at the
+# end (not during setup) so curl/dig in the build phase aren't delayed by v6
+# connect timeouts; the fail_closed trap covers IPv6 on the error path.
+if command -v ip6tables >/dev/null 2>&1; then
+    ip6tables -P INPUT DROP
+    ip6tables -P FORWARD DROP
+    ip6tables -P OUTPUT DROP
+    ip6tables -F
+    ip6tables -A INPUT  -i lo -j ACCEPT
+    ip6tables -A OUTPUT -o lo -j ACCEPT
+    echo "IPv6 egress locked down (loopback only)."
+else
+    echo "WARNING: ip6tables not available - cannot lock down IPv6. Verify no IPv6 route exists (ip -6 route)."
+fi
+# -----------------------------------------------------------------------------
 
 # First allow established connections for already approved traffic
 iptables -A INPUT -m state --state ESTABLISHED,RELATED -j ACCEPT
