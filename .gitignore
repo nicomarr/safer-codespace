@@ -185,3 +185,6 @@ skills-lock.json
 TODO.md
 todo.md
 **/todo.md
+
+# Session exports/chat logs.
+.session-exports
