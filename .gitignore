@@ -173,3 +173,9 @@ temp/
 context/untrusted/*
 .specstory/*
 CLAUDE.local.md
+
+# Custom skills are intentionally NOT part of this template.
+# Skills are executable content and belong in their own reviewable repo;
+# keeping them out keeps this template's audit surface minimal.
+.agents/
+skills-lock.json
