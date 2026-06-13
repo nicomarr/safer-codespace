@@ -96,6 +96,10 @@ run_check "HTTPS to global.rel.tunnels.api.visualstudio.com" "pass" \
 
 echo
 echo "=== Negative controls (non-allowlisted destinations should be blocked) ==="
+# IPv6 must be locked down (issue #25): the allowlist is IPv4-only, so any v6
+# egress would bypass the firewall. Confirm the v6 OUTPUT policy is DROP.
+run_check "IPv6 OUTPUT policy is DROP (locked down)" "pass" \
+    "command -v ip6tables >/dev/null 2>&1 && sudo ip6tables -L OUTPUT -n | grep -q 'policy DROP'"
 # These prove the firewall actually denies what it claims to deny. We use
 # bash /dev/tcp probes for TCP checks (no application-layer involvement)
 # to avoid ambiguity between "firewall blocked it" and "app rejected us".
