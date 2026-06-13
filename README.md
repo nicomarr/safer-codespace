@@ -266,6 +266,13 @@ This template uses **multiple redundant layers** rather than relying on any sing
 - **Allowed domains:** GitHub, npm, PyPI, Anthropic API, Google Gemini API, etc.
 - **Automatically configured** on container startup
 - **Validates rules** to ensure proper function
+- **Fails closed:** if `init-firewall.sh` cannot complete — a network error, a
+  bad precondition, or a signal such as SIGHUP from a terminal closing mid-run —
+  it locks the container down (egress blocked, loopback only) instead of leaving
+  it open. A security control must fail closed, not silently open. Re-run the
+  script to restore normal operation; for manual re-runs, detach so a closing
+  terminal cannot interrupt the apply mid-flight:
+  `setsid bash .devcontainer/init-firewall.sh`.
 
 **Test the firewall:**
 ```bash
