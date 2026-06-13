@@ -75,9 +75,11 @@ systematic testing:
 - No `GITHUB_TOKEN` is auto-injected locally, so that documented exfiltration
   channel is absent unless you authenticate tools inside the container
   yourself. Authenticate only what you need.
-- The Codespaces stop-wedge (see Troubleshooting) depends on Azure
-  orchestration that does not exist locally, so it is not expected here.
-  Local stop/restart behavior has not been systematically tested.
+- The Codespaces stop-wedge (see Troubleshooting) is caused by the firewall
+  blocking the Codespaces network-backed filesystem (Azure Storage). A local
+  container has a local filesystem, so there is no storage backend for the
+  firewall to starve and the failure class does not arise here. This is the
+  main reason to prefer local Docker for security-sensitive work.
 - As on Codespaces, iptables rules do not survive a container restart
   (issue #24). After stopping and restarting the container, the firewall is
   gone until you re-run `init-firewall.sh` or rebuild. Check with
@@ -360,7 +362,15 @@ sudo /workspaces/safer-codespace/.devcontainer/init-firewall.sh
 
 **Solution:** Symptoms of the Codespaces connectivity plane (dev tunnels) being blocked. The firewall allowlists `global.rel.tunnels.api.visualstudio.com` plus common regional hosts (Group 3 in `.devcontainer/init-firewall.sh`); if your region's host is missing, find it with the NFLOG procedure below and add it. `gh codespace ssh` additionally requires the `sshd` feature in `devcontainer.json` (included in this template). Sessions opened during container creation can keep working while new connections fail — the firewall's ESTABLISHED rule preserves existing flows — so "the editor works but ssh doesn't" does not rule out this cause.
 
-**KNOWN ISSUE (observed on Codespaces only): stopping a firewall-active codespace wedges in `ShuttingDown` (35 min to 4+ hours), and a resume after a wedged stop can come back in recovery mode with the container AND workspace destroyed (all uncommitted work lost).** Verified 2026-06-11 across 6 wedges and 2 firewall-off controls (~2-min stops). Allowlisting the dev-tunnels, Azure wireserver, and IMDS channels did not resolve it; the remaining continuously-rejected destination during wedges was an Azure Storage endpoint (TCP/443, 20.209.0.0/16). Until root-caused: **commit and push before stopping**, treat codespaces as disposable, and expect stops to complete eventually on the platform's force-kill timeout. Debugging tip: outbound packets REJECTed by the firewall never appear in `tcpdump -i eth0` — to see what the firewall is actually blocking, insert an NFLOG rule and capture it: `sudo iptables -I OUTPUT <n> -j NFLOG --nflog-group 5 && sudo tcpdump -i nflog:5` (where `<n>` is the REJECT rule's position).
+**KNOWN ISSUE (Codespaces only): with the storage backend blocked, stopping a firewall-active codespace wedges in `ShuttingDown` (35 min to 4+ hours), and a resume after a wedged stop can come back in recovery mode with the container AND workspace destroyed (all uncommitted work lost).**
+
+**Root cause (confirmed 2026-06-13):** a Codespace's container filesystem is backed by Azure Storage over the network, and that traffic transits the firewall's `OUTPUT` chain. The default-DROP policy starves it — cached pages keep working, but any read that misses page cache cannot reach the backing store and faults (`Input/output error` on ordinary reads, `Bus error` / SIGBUS on mmap). The same blocked storage is what a `stop` cannot flush to (the wedge) and what `resume` cannot read back (the data loss). Proven by a clean A/B test: `date` returns EIO with the firewall closed and works the instant it is opened; and a stop with the Azure Storage backend ranges allowed completed cleanly in ~2m40s (vs. the multi-hour wedges) with an intact workspace on resume.
+
+**Workaround today:** prefer running locally (Clone in Volume), where the filesystem is local and the failure class does not exist. If you must use Codespaces, **commit and push before stopping**, treat codespaces as disposable, and expect a wedged stop to complete only on the platform's force-kill timeout.
+
+**Fix direction (not yet implemented):** allow the Azure "Storage" service-tag ranges for the codespace's region (rotating; refresh on Microsoft's weekly schedule), or front egress with a hostname-aware proxy that can permit the specific storage-account FQDNs and nothing else. A few hardcoded IP ranges will not hold — the backend spans multiple, rotating, region-dependent Storage ranges. Tracked in issue #23.
+
+Debugging tip: outbound packets REJECTed by the firewall never appear in `tcpdump -i eth0` (they die in `OUTPUT` before the capture tap) — to see what the firewall is actually blocking, insert an NFLOG rule and capture it: `sudo iptables -I OUTPUT <n> -j NFLOG --nflog-group 5 && sudo tcpdump -i nflog:5` (where `<n>` is the REJECT rule's position). To find the storage backend directly: open the firewall briefly and run `ss -tn | grep ESTAB` — the persistent `:443` connections to Azure Storage ranges are it.
 
 **Problem:** Periodic `no route to host` errors from `claude` or related tooling
 
