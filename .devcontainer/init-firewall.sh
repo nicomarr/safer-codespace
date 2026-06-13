@@ -265,7 +265,11 @@ OPTIONAL_DOMAINS=(
     "nodejs.org"
     # Other languages
     "docs.oracle.com"          # Java
-    "learn.microsoft.com"      # .NET, Azure docs, etc.
+    # learn.microsoft.com removed (issue #27): Akamai's large rotating A-record
+    # pool defeats IP-snapshot allowlisting (constant staleness), and its shared
+    # CDN IPs widen exfil surface to other Akamai-hosted content. It was
+    # convenience-only (url_to_markdown doc fetch). Re-add here AND in
+    # url_to_markdown.py ALLOWED_DOMAINS if you need MS Learn docs.
     # Frameworks
     "react.dev"
     "vuejs.org"

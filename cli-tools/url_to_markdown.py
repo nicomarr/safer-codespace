@@ -50,7 +50,8 @@ ALLOWED_DOMAINS: set[str] = {
 
     # Other languages
     'docs.oracle.com',  # Java
-    'learn.microsoft.com',  # .NET, etc
+    # learn.microsoft.com removed (issue #27) — kept in sync with the firewall
+    # allowlist; see .devcontainer/init-firewall.sh for the rationale.
 
     # Frameworks & Tools
     'react.dev',

@@ -86,8 +86,10 @@ run_check "HTTPS to docs.python.org (Python docs)" "pass" \
     "curl --connect-timeout 5 -fsS -o /dev/null https://docs.python.org/3/"
 run_check "HTTPS to docs.claude.com (LLM/AI docs)" "pass" \
     "curl --connect-timeout 5 -fsS -o /dev/null https://docs.claude.com/"
-run_check "HTTPS to learn.microsoft.com (cloud/.NET docs)" "pass" \
-    "curl --connect-timeout 5 -fsS -o /dev/null https://learn.microsoft.com/"
+# Note (issue #27): no CDN-rotating doc site (e.g. learn.microsoft.com on Akamai)
+# is used as a positive control — a snapshot allowlist cannot reliably pass a
+# domain whose A-records rotate per query. docs.python.org and docs.claude.com
+# (stable CDNs) represent the doc tier here.
 # Codespaces connectivity plane (dev tunnels). GitHub's documented health check
 # endpoint for the tunnel service. Without this allowed, `gh codespace ssh`,
 # browser reconnection, and clean stops all fail (see init-firewall.sh Group 3).
