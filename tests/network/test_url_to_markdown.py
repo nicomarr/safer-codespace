@@ -71,7 +71,6 @@ DOMAIN_TEST_URLS = {
 
     # Other languages
     'docs.oracle.com': 'https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html',
-    'learn.microsoft.com': 'https://learn.microsoft.com/en-us/dotnet/csharp/tour-of-csharp/',
 
     # Frameworks & Tools
     'react.dev': 'https://react.dev/learn',

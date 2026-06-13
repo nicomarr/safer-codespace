@@ -180,6 +180,8 @@ CLAUDE.local.md
 .agents/
 skills-lock.json
 
-# Local session scratchpad for tracking progress mid-session.
+# Session/dev scratchpads — never shipped in this public template.
 # Durable records live in git history and GitHub issues, not here.
 TODO.md
+todo.md
+**/todo.md
