@@ -179,3 +179,7 @@ CLAUDE.local.md
 # keeping them out keeps this template's audit surface minimal.
 .agents/
 skills-lock.json
+
+# Local session scratchpad for tracking progress mid-session.
+# Durable records live in git history and GitHub issues, not here.
+TODO.md
