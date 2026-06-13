@@ -7,6 +7,11 @@ on:
     branches: [ "main" ]
   workflow_dispatch:
     # Manual trigger for on-demand testing
+
+# Minimal token scope (issue #26).
+permissions:
+  contents: read
+
 jobs:
   llm-test:
     runs-on: ubuntu-latest
