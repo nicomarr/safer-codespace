@@ -51,10 +51,10 @@ That's it! All tools are pre-installed and the security firewall is automaticall
 
 ### Running locally (VS Code + Docker Desktop)
 
-The same template runs on your own machine. Validated once (2026-06-11, macOS
-on Apple Silicon): the firewall comes up during postCreate, and
-`verify-firewall.sh` passes everything except the two Azure-only checks
-(wireserver, IMDS), which fail by design outside Azure (see issue #28).
+The same template runs on your own machine. The firewall comes up during
+postCreate and re-applies automatically on restart; `verify-firewall.sh` should
+pass locally (a `learn.microsoft.com` positive control may intermittently FAIL
+due to CDN IP rotation — see issue #27).
 
 1. Install and start [Docker Desktop](https://www.docker.com/products/docker-desktop/), plus the VS Code [Dev Containers extension](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers).
 2. Command Palette → **Dev Containers: Clone Repository in Container Volume...** → this repository.

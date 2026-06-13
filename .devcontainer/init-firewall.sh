@@ -107,29 +107,15 @@ for resolver in $resolvers; do
     iptables -A OUTPUT -p tcp --dport 53 -d "$resolver" -j ACCEPT
 done
 
-# Azure platform channels (Codespaces runs on Azure VMs). Evidence from
-# 2026-06-11 NFLOG capture: in-container platform components continuously
-# attempt TCP/80 to both of these and were being rejected, invisible to
-# tcpdump-on-eth0 (REJECTed packets never reach the interface):
-#   - 168.63.129.16: the Azure "wireserver" (VM fabric/orchestration channel).
-#     Azure's own guest hardening (legacy iptables *security* table, present
-#     in the Codespaces image) already restricts NEW connections here to
-#     uid 0, so this allow is effectively root-only.
-#   - 169.254.169.254: the Azure Instance Metadata Service (IMDS).
-# Stops of firewall-active codespaces wedged in ShuttingDown for 35 min-4 h
-# (6/6 observed) and post-wedge resumes destroyed container + workspace;
-# firewall-off controls stopped in ~2-3 min (2/2). NOTE (tested 2026-06-11):
-# allowing these two channels alone did NOT resolve the stop-wedge — a fresh
-# codespace with both rules active from boot still wedged. They are kept
-# because platform components demonstrably depend on them (continuous retry
-# stream otherwise) and the wireserver allow is root-only by Azure's own
-# guest hardening. The remaining continuously-rejected destination during
-# wedges was an Azure Storage endpoint (20.209.0.0/16 space, TCP/443) — the
-# open lead. See README "Known issues" for the stop-wedge status.
-# SECURITY NOTE: IMDS is a classic SSRF/credential target; allowing it is a
-# platform-functionality tradeoff, documented in the README threat model.
-iptables -A OUTPUT -d 168.63.129.16 -p tcp --dport 80 -j ACCEPT
-iptables -A OUTPUT -d 169.254.169.254 -p tcp --dport 80 -j ACCEPT
+# Note (issue #28): PR #21 previously allowed the Azure wireserver
+# (168.63.129.16) and IMDS (169.254.169.254) here, on the hypothesis that they
+# were part of the Codespaces stop handshake. Issue #23 disproved that — the
+# stop-wedge is the firewall starving the network-backed Azure Storage
+# filesystem, not these endpoints. The allows were therefore REMOVED: they
+# rested on a falsified premise, IMDS (169.254.169.254) is a classic
+# SSRF/credential-exfiltration target that contradicts this firewall's purpose,
+# and both are inert on the supported local-Docker path. Re-add only with
+# concrete evidence of a dependency.
 
 # Note: upstream init-firewall.sh has `iptables -A INPUT -p udp --sport 53 -j
 # ACCEPT` here to accept DNS responses. Removed in this fork — source ports
