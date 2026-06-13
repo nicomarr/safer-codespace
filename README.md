@@ -383,6 +383,10 @@ Debugging tip: outbound packets REJECTed by the firewall never appear in `tcpdum
 
 **Solution:** This fork removes `sentry.io` (error reporting) and `statsig.com` (feature flags) from the firewall allowlist — both endpoints are explicitly designed to ingest arbitrary client-side data, which we treat as exfiltration surface. The tooling still functions; the error lines are the firewall blocking telemetry calls, which is intentional. If you need these endpoints for a specific workflow, add them back to `OPTIONAL_DOMAINS` in `.devcontainer/init-firewall.sh` and rebuild.
 
+**Problem:** an allowlisted documentation site intermittently fails to load
+
+**Solution:** The firewall allowlists IPs from a one-time DNS snapshot taken when `init-firewall.sh` runs. CDN-fronted doc sites (Akamai/Cloudflare/Fastly) rotate their A-records, so the live IP can drift off the snapshot and the connection is blocked — the same IP-cannot-express-hostname limit described for the storage backend in [issue #23](https://github.com/nicomarr/safer-codespace/issues/23). The doc-site allowlist (Group 2 in `init-firewall.sh`) is therefore **best-effort**: re-run `init-firewall.sh` to refresh the snapshot if a specific allowed doc site fails. `learn.microsoft.com` was removed outright (issue #27) as the worst offender (large Akamai pool) and because its shared CDN IPs widen the surface; re-add it there and in `cli-tools/url_to_markdown.py` if you need Microsoft Learn docs.
+
 **For temporary debugging:** Disable the firewall (resets on container restart):
 ```bash
 sudo iptables -F
