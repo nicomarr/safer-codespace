@@ -8,6 +8,44 @@ if [[ "${CI:-false}" == "true" ]]; then
     exit 0
 fi
 
+# --- Fail closed (issue #22) -------------------------------------------------
+# This script runs with egress ALLOWED during setup (it must fetch GitHub IP
+# ranges and resolve domains), and only switches to default-DROP at the end.
+# If it exits before completing — a command error (set -e), an explicit `exit 1`
+# on a bad precondition, or a signal such as SIGHUP from a terminal closing
+# mid-run — the container must be left LOCKED DOWN (egress blocked, loopback
+# only), never in the wide-open build-phase state. A security control fails
+# closed, not open. Normal completion sets SUCCESS=1 just before exit, making
+# the trap a no-op on success.
+#
+# Manual re-runs should be detached so a closing terminal cannot SIGHUP the
+# apply mid-flight:   setsid bash .devcontainer/init-firewall.sh
+SUCCESS=0
+fail_closed() {
+    echo "ERROR: firewall setup did not complete — locking down (fail closed)." >&2
+    # OUTPUT first so egress is blocked before anything else; best-effort on the
+    # rest (we are already on an error path and must not abort here).
+    iptables -P OUTPUT DROP  || true
+    iptables -P INPUT DROP   || true
+    iptables -P FORWARD DROP || true
+    iptables -F              || true
+    iptables -A INPUT  -i lo -j ACCEPT || true
+    iptables -A OUTPUT -o lo -j ACCEPT || true
+}
+on_exit() {
+    local rc=$?
+    [ "$SUCCESS" = 1 ] && exit 0
+    fail_closed
+    exit "$rc"
+}
+# Signals exit with a code; the single EXIT handler does the lockdown work,
+# so a signal can never bypass fail-closed and never double-runs it.
+trap on_exit EXIT
+trap 'exit 129' HUP
+trap 'exit 130' INT
+trap 'exit 143' TERM
+# -----------------------------------------------------------------------------
+
 # 1. Extract Docker DNS info BEFORE any flushing
 DOCKER_DNS_RULES=$(iptables-save -t nat | grep "127\.0\.0\.11" || true)
 
@@ -363,3 +401,7 @@ if ! curl --connect-timeout 5 https://api.github.com/zen >/dev/null 2>&1; then
 else
     echo "Firewall verification passed - able to reach https://api.github.com as expected"
 fi
+
+# All rules applied and both reachability checks passed. Mark success so the
+# fail-closed EXIT trap becomes a no-op for this clean exit.
+SUCCESS=1
