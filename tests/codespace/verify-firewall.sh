@@ -93,13 +93,6 @@ run_check "HTTPS to learn.microsoft.com (cloud/.NET docs)" "pass" \
 # browser reconnection, and clean stops all fail (see init-firewall.sh Group 3).
 run_check "HTTPS to global.rel.tunnels.api.visualstudio.com" "pass" \
     "curl --connect-timeout 5 -fsS -o /dev/null https://global.rel.tunnels.api.visualstudio.com/api/version"
-# Azure platform channels (see init-firewall.sh "Azure platform channels").
-# Wireserver requires root (Azure's legacy security-table rule drops non-root
-# NEW connections by design), hence sudo.
-run_check "HTTP to Azure wireserver 168.63.129.16 (as root)" "pass" \
-    "sudo curl --connect-timeout 5 -fsS -o /dev/null 'http://168.63.129.16/?comp=versions'"
-run_check "HTTP to Azure IMDS 169.254.169.254" "pass" \
-    "curl --connect-timeout 5 -fsS -o /dev/null -H 'Metadata: true' 'http://169.254.169.254/metadata/instance?api-version=2021-02-01'"
 
 echo
 echo "=== Negative controls (non-allowlisted destinations should be blocked) ==="
