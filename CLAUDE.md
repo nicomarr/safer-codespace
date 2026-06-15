@@ -2,84 +2,58 @@
 
 ## Core workflow principles
 
-The following principles MUST guide all development work and problem-solving tasks:
+How we work together, especially on debugging and investigations:
 
-1. **A smooth path to a Minimum Viable Product (MVP) is essential.**
-2. **Be strategic when solving problems:** Apply George Pólya's problem-solving framework as general heuristics for solving problems.
-3. **Be a helpful collaborator, not overambitious:** Work in collaboration with the user, seek clarifications and feedback as needed. Involve the user throughout the process. Never make assumptions about requirements without confirming with the user first. Be mindful that humans prefer to read short, focused outputs rather than long, complex ones.
+- **MVP first.** Ship the simplest thing that solves the core problem end-to-end,
+  then iterate (see MVP-first below).
+- **Evidence before claims.** Don't state how a system behaves without testing it.
+  Label confidence: confirmed, strongly-supported, inferred, or assumption. If you
+  cannot test something, say so and mark it inferred.
+- **Calibrated, not hedging.** Be decisive when evidence supports it; never
+  manufacture confidence.
+- **Falsify and correct.** Try to disprove your own hypotheses. When new evidence
+  overturns an earlier claim, say so and fix the record.
+- **Hypothesis-first.** State a falsifiable prediction (or write a failing test)
+  before concluding. Red-green TDD for code; predict-then-test for debugging.
+- **Small steps, together.** One step at a time. The user runs what the agent cannot
+  (real Codespaces, `gh`, destructive or credentialed actions) and pastes outputs;
+  the agent interprets and proposes the next single step.
+- **Explain the mechanism.** The user wants to understand root causes and reasoning,
+  not just receive a fix.
+- **Decisive minimal test.** Choose the fastest test that settles the question; avoid
+  slow or destructive tests when a quick check suffices.
+- **MRE before closing a major issue.** Reproduce it independently from scratch, and
+  state honestly what is reliably reproducible and what is not.
+- **Care with destructive or credentialed actions.** Warn clearly, use throwaways,
+  and leave execution to the user.
 
 ### MVP-first approach
 
-A Minimum Viable Product (MVP) must:
+An MVP solves the core problem, is demonstrable and testable, works end-to-end (even
+if basic), and is a foundation to iterate on. Start with the simplest solution:
 
-- Solve the core problem
-- Be demonstrable and testable
-- Work end-to-end (even if basic)
-- Serve as foundation for iteration
+- Single test case before general cases; concrete example before abstraction.
+- Console output before UI; CLI (e.g. `curl`) before a library (e.g. `requests`).
+- Standard library before third-party (unless widely used, e.g. `numpy`, `pandas`).
+- Minimize dependencies and complexity.
 
-Start with the simplest solution for each task:
+### Problem-solving (Pólya)
 
-- Single test case before general cases
-- Console output before UI
-- Concrete example before abstraction
-- Command-line tool (e.g., `curl`) before a Python library (e.g., `requests`, `httpx`)
-- Standard library module before third-party packages (unless the package is well documented and widely used, e.g., `numpy`, `pandas`)
-- Minimize third-party dependencies and complexity
+Understand the problem (restate it in your own words; diagram with Mermaid if useful),
+devise a plan (prefer the simplest promising strategy), carry it out (test each
+component as you go), then look back (check edge cases, refactor, capture lessons).
 
-**Examples of an MVP** (the expected outcome):
+### Starting a new project
 
-- A Python library for PyPI with well-documented functions/classes and test cases that solve the core problem (e.g., an API client, SDK, or wrapper for an existing library/service)
-- Source code for a simple GUI built on a well-established database engine (e.g., SQLite) to simplify basic CRUD operations (e.g., contact manager, task tracker)
-- A GitHub repository template for new projects addressing a specific problem domain (e.g., prompt injection risks)
-
-### Problem-solving method (George Pólya's method)
-
-Follow these four steps when solving problems:
-
-#### 1. Understand the problem
-
-- Read carefully and identify what is given vs. what is unknown
-- Restate the problem in your own words
-- Draw diagrams (use Mermaid) if helpful
-- Ask clarifying questions
-
-#### 2. Devise a plan
-
-- Consider multiple strategies: work backwards, find patterns, break into parts, simplify, use analogies
-- Choose the most promising approach
-- Relate to similar problems you've solved before
-
-#### 3. Carry out the plan
-
-- Execute systematically with patience
-- Document your work via clear names, comments, and docstrings
-- Test as you go and verify each component
-
-#### 4. Look back
-
-- Review and test edge cases
-- Reflect on what worked and what didn't
-- Refactor if needed
-- Generalize the solution for future use
-- Document insights and lessons learned
-
-### Additional guidelines for software development from scratch
-
-Follow these guidelines when starting a new project:
-
-- **Write a `PLAN.md`**: You MUST write the plan to file `PLAN.md` for the user to review before implementation.
-- **Gather all relevant context**: You MUST gather all relevant context before starting implementation. Ask the user for more information or manually retrieve documents/code snippets if you cannot find them yourself with the available tools or when in doubt.
-- **Reduce the scope where needed**: If the problem is too broad or ill-defined, work with the user to narrow the scope to something manageable. Aim for 5 to 6 steps (more than 10 steps is likely too many).
-- **Validate immediately**: Use print statements, assertions, or simple tests to verify correctness right after implementing each part.
-- **Error handling**: Let the user implement ALL error handling unless explicitly instructed otherwise. You can make suggestions, but do NOT implement error handling code yourself.
+- **Write a `PLAN.md`** for the user to review before implementing.
+- **Gather all relevant context first**; ask or retrieve what you cannot find.
+- **Reduce scope** to ~5-6 steps if the problem is broad or ill-defined.
+- **Validate immediately** with prints, assertions, or small tests after each part.
+- **Error handling is the user's** unless explicitly handed over: propose it, don't write it.
 
 ## Security
 
-### Critical security principles
-
-When building applications and GitHub Actions workflows, be aware of these critical vulnerabilities:
-
-#### Prompt injection risks
+### Prompt injection risks
 
 **The Lethal Trifecta** - We NEVER combine these three capabilities in a single system:
 1. **Access to private data** - Tools that can read sensitive information
@@ -91,8 +65,9 @@ When building applications and GitHub Actions workflows, be aware of these criti
 - String concatenation of trusted + untrusted content = vulnerability (like SQL injection)
 - "Guardrails" that work 95% of the time = failing grade in security
 - We remove at least one leg of the trifecta to mitigate risks
+- A security control must **fail closed**: if setup cannot complete, lock down rather than leave the system open. Silent fail-open is worse than no control.
 
-#### GitHub Actions workflow injection
+### GitHub Actions workflow injection
 
 **Common vulnerability:** Untrusted input (issue titles, branch names) executed via `${{}}` syntax
 
@@ -136,7 +111,7 @@ Follow these Python coding standards:
 - **Inline comments liberally**: Explain "why" behind non-obvious decisions
 - **Maximum 160 characters per line**
 - **Use f-strings for string interpolation**: Avoid `%` formatting and `str.format()`
-- **Write functions with single responsibility**: Each function should do one thing well and ideally be under 10 lines of code (excluding docstrings and comments). Redundant documentation is better than missing documentation.
+- **Write small, single-purpose functions**: each should do one thing well. When in doubt, document; missing docs cost more than redundant ones.
 - **Build classes incrementally**: If using classes, register methods step by step as needed
 
 ### Naming (human-readable required)
@@ -152,140 +127,55 @@ Use clear, descriptive names throughout your code:
 
 ### Code quality principles
 
-Follow the Zen of Python:
-
-- Readability counts - code is read far more than it is written
-- Explicit is better than implicit
-- Simple is better than complex
-- If the implementation is hard to explain, it's a bad idea
+Follow the Zen of Python: readable over clever, explicit over implicit, simple over complex; if it is hard to explain, it is a bad idea.
 
 ## Testing & validation
 
-### Use assertions
-
-Add assertions to validate assumptions during development:
-
-```python
-assert len(data) > 0, "Data cannot be empty"
-assert 0 <= probability <= 1, f"Probability must be in [0,1], got {probability}"
-```
-
-### Debug & verbose parameters
-
-Include optional `verbose=False` or `debug=False` parameters for debugging:
-
-```python
-def process_data(data: list[float], verbose: bool = False) -> list[float]:
-    """Process input data.
-    
-    Args:
-        data: Input data to process.
-        verbose: If True, print intermediate steps.
-        
-    Returns:
-        Processed data.
-    """
-    if verbose:
-        print(f"Processing {len(data)} items")
-    # ... implementation
-```
-
-### Testing approaches
-
-Choose the appropriate testing approach based on your situation:
-
-**TDD (Test-Driven Development)** - Use when requirements are clear:
-
-1. Write failing test first (RED)
-2. Implement minimum code to pass (GREEN)
-3. Refactor and improve (REFACTOR)
-
-**Immediate Testing** - Use for exploration/prototyping:
-
-- Implement based on intuition
-- Test immediately after implementation
-- Use assertions and print statements in .py files or Jupyter notebook cells
-- Iterate based on observed behavior
-
-**Avoid unittest** - Prefer pytest or notebook cells with assertions and visual inspection instead.
+- **Use assertions** to validate assumptions during development, e.g.
+  `assert 0 <= probability <= 1, f"probability must be in [0,1], got {probability}"`.
+- **Add `verbose`/`debug` parameters** (default `False`) to gate diagnostic prints.
+- **Fit the testing style to the work:** red-green TDD when requirements are clear
+  (see Core workflow principles); immediate testing for exploration (implement, then
+  assert/print in a script or notebook cell and iterate).
+- **Avoid `unittest`.** Prefer `pytest`, or notebook cells with assertions and visual
+  inspection.
 
 ## Git workflow
 
-### Conventional commits (required)
+Per the project rules, do not run `git` or `gh` unless I explicitly ask. When you do,
+or when proposing commands for me to run, follow these conventions.
 
-Use conventional commit format for all commits:
+### Conventional commits
 
-Format: `<type>: <description>`
-
-Types: `feat`, `fix`, `docs`, `style`, `refactor`, `perf`, `test`, `chore`, `ci`
-
-Examples:
-
-```
-feat: add normalize_scores function with verbose mode
-fix: handle edge case when all scores are identical
-docs: update testing guidelines
-```
-
-Rules:
-
-- Use lowercase for both type and description
-- Use imperative mood ("add" not "added")
-- Keep it concise (50 characters or less preferred)
+`<type>: <description>`, lowercase, imperative mood, concise (<=50 chars preferred).
+Types: `feat`, `fix`, `docs`, `style`, `refactor`, `perf`, `test`, `chore`, `ci`.
+Example: `fix: handle empty score list`.
 
 ### Branch management
 
-**Use `git switch` exclusively:**
-
-- Switch branches: `git switch branch-name`
-- Create new branch: `git switch -c new-branch-name`
-
-**FORBIDDEN commands (never use):**
-
-- `git checkout` - can overwrite files unexpectedly
-- `git branch -D` - deletes branches permanently
-- `git reset --hard` - loses uncommitted changes
-- `git clean -fd` - deletes untracked files
-- Any other destructive commands
+Use `git switch` only (`git switch -c <name>` for new branches). Never use destructive
+commands: `git checkout`, `git branch -D`, `git reset --hard`, `git clean -fd`.
 
 ### Best practices
 
-Follow these Git workflow best practices:
-
-- Make small, focused commits (one logical change per commit)
-- Never force push to main/master branches
-- Create feature branches for new work
+Small, focused commits (one logical change each); feature branches for new work;
+never force-push to main/master.
 
 ## Development environment and documentation
 
-### Jupyter notebooks (preferred when appropriate)
-
-Use Jupyter notebooks as the primary development environment when it makes sense:
-
-- Combine narrative (markdown) + code + outputs in one place
-- Design code to work naturally in notebook environments
-- Support interactive, exploratory workflows
-- Facilitate incremental development and testing
-
-### Literate programming
-
-Write code that tells a story:
-
-- Write for humans first, computers second
-- Explain logic in natural language using docstrings and comments
-- Document your thought process as you solve problems
-- Make your reasoning explicit and transparent
+Prefer Jupyter notebooks when they fit the task: they combine narrative, code, and
+outputs in one place and suit interactive, incremental development. Write literate code
+that tells a story for humans first, explaining the "why" in markdown, docstrings, and
+comments and making your reasoning explicit. (Concrete docstring, comment, and
+type-hint rules live under Code style.)
 
 ## Additional guidelines
 
-- Use the latest stable Python version
-- Prefer numpy/pytorch broadcasting over loops when working with arrays
-- Include references to URLs when implementing from web sources
-- Include references to papers when implementing from academic research
-- Focus on self-documenting code supported by comments and docstrings
-- **Never use emojis** unless explicitly requested by the user
-- Keep pull requests small and focused
-- Balance conciseness with readability - favor readability when in doubt
+- Use the latest stable Python version.
+- Prefer numpy/pytorch broadcasting over loops for array work.
+- Cite URLs when implementing from web sources, and papers when implementing from research.
+- **Never use emojis** unless the user explicitly requests them.
+- Favor readability over cleverness when the two conflict.
 
 ## When to override
 
@@ -294,9 +184,3 @@ Override these preferences only when:
 - Explicitly instructed to omit type hints, docstrings, or comments
 - Working with existing code (match the existing style for consistency)
 - Performance-critical code where verbosity impacts readability negatively
-
-## Custom tools
-
-In addition to the core tools provided with Claude Code, the following tools are available in this development environment:
-
-- [Tools to be added]
