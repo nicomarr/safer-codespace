@@ -320,7 +320,7 @@ for domain in \
 
 *Codespaces tunnel relay.* The allowlist includes GitHub's dev-tunnels service (`*.rel.tunnels.api.visualstudio.com`, "Group 3" in `init-firewall.sh`); without it `gh codespace ssh` fails and browser reconnection hangs. The tradeoff: the tunnel relays arbitrary traffic by design, so a compromised agent could open its own dev tunnel to exfiltrate. We deliberately do NOT allowlist the broader Azure wildcards GitHub lists (`*.windows.net`, `*.azureedge.net`), which would permit arbitrary-content hosting.
 
-*Allowlisted LLM endpoints.* Endpoints such as `api.anthropic.com` and `models.inference.ai.azure.com` accept arbitrary text, so a compromised agent could POST stolen data to one. Enable only the provider you actually use (see Prerequisites) to keep this surface small.
+*Allowlisted LLM endpoints.* Endpoints such as `api.anthropic.com` and `models.github.ai` accept arbitrary text, so a compromised agent could POST stolen data to one. Enable only the provider you actually use (see Prerequisites) to keep this surface small.
 
 *GitHub itself.* GitHub's IP ranges must be allowlisted for the repo to work, so with the auto-injected `GITHUB_TOKEN` an agent can `git push` to a fork, create a gist, or post comments with stolen content. See "Why No GitHub CLI?" below.
 
