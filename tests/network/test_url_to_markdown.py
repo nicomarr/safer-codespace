@@ -85,7 +85,6 @@ DOMAIN_TEST_URLS = {
     # Databases
     'postgresql.org': 'https://www.postgresql.org/docs/current/tutorial-start.html',
     'dev.mysql.com': 'https://dev.mysql.com/doc/refman/8.0/en/tutorial.html',
-    'mongodb.com': 'https://www.mongodb.com/docs/manual/introduction/',
 
     # LLM/AI related
     'llm.datasette.io': 'https://llm.datasette.io/en/stable/',

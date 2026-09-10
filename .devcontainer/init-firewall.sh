@@ -292,7 +292,10 @@ OPTIONAL_DOMAINS=(
     "postgresql.org"
     "www.postgresql.org"
     "dev.mysql.com"
-    "mongodb.com"
+    # mongodb.com removed: its docs live on www.mongodb.com, which sits on a
+    # rotating CloudFront pool that an IP snapshot cannot track (same class as
+    # learn.microsoft.com, issue #27). Re-add both names here AND in
+    # url_to_markdown.py ALLOWED_DOMAINS if you need MongoDB docs.
     # LLM / AI
     "llm.datasette.io"
     "datasette.io"

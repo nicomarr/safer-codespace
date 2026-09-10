@@ -66,7 +66,7 @@ ALLOWED_DOMAINS: set[str] = {
     # Databases
     'postgresql.org',
     'dev.mysql.com',
-    'mongodb.com',
+    # mongodb.com removed (rotating CDN, see init-firewall.sh Group 2 and issue #27).
 
     # LLM/AI related
     'llm.datasette.io',
