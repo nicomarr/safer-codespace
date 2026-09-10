@@ -86,6 +86,11 @@ run_check "HTTPS to docs.python.org (Python docs)" "pass" \
     "curl --connect-timeout 5 -fsS -o /dev/null https://docs.python.org/3/"
 run_check "HTTPS to docs.claude.com (LLM/AI docs)" "pass" \
     "curl --connect-timeout 5 -fsS -o /dev/null https://docs.claude.com/"
+# A www. host whose A-records differ from its apex: proves the allowlist
+# covers the host the docs are actually served from, not just the domain
+# string in the list (the mongodb.com/www.mongodb.com defect, 2026-09-10).
+run_check "HTTPS to www.postgresql.org (www host, not apex)" "pass" \
+    "curl --connect-timeout 5 -fsS -o /dev/null https://www.postgresql.org/docs/"
 # Note (issue #27): no CDN-rotating doc site (e.g. learn.microsoft.com on Akamai)
 # is used as a positive control — a snapshot allowlist cannot reliably pass a
 # domain whose A-records rotate per query. docs.python.org and docs.claude.com

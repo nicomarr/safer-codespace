@@ -284,7 +284,13 @@ OPTIONAL_DOMAINS=(
     "docs.github.com"
     "docs.gitlab.com"
     # Databases
+    # Sites that serve docs from a www. host need that host listed too: the
+    # apex and www. are different DNS names with (partly) different A-records,
+    # so allowlisting only postgresql.org left www.postgresql.org (where the
+    # docs live, and where the apex 301s to) reachable only by luck of which
+    # shared IP curl picked. Verified 2026-09-10 in a local container.
     "postgresql.org"
+    "www.postgresql.org"
     "dev.mysql.com"
     "mongodb.com"
     # LLM / AI
