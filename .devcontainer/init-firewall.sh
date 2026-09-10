@@ -250,7 +250,12 @@ OPTIONAL_DOMAINS=(
     "update.code.visualstudio.com"
     "pypi.org"
     "files.pythonhosted.org"
-    "models.inference.ai.azure.com"
+    # GitHub Models moved from models.inference.ai.azure.com (now NXDOMAIN) to
+    # models.github.ai; llm-github-models sends inference requests there.
+    # The new host currently sits inside GitHub's published ranges, so it was
+    # reachable by accident; listed explicitly so the intent survives if that
+    # changes. Updated 2026-09-10.
+    "models.github.ai"
     "generativelanguage.googleapis.com"
     "proxy.golang.org"
     "sum.golang.org"

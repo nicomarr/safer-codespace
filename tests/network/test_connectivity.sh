@@ -34,7 +34,7 @@ echo
 endpoints=(
     "PyPI:pypi.org:443"
     "GitHub API:api.github.com:443"
-    "GitHub Models:models.inference.ai.azure.com:443"
+    "GitHub Models:models.github.ai:443"
     "Anthropic API:api.anthropic.com:443"
     "Gemini API:generativelanguage.googleapis.com:443"
     "npm registry:registry.npmjs.org:443"
